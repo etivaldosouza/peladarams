@@ -63,8 +63,8 @@ const Index = () => {
   }, []);
 
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
-  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
-  const saldo = totalArrecadado - VALOR_CAMPO;
+  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
+  const saldo = totalArrecadado - valorCampo;
 
   const addPlayer = useCallback(() => {
     const trimmed = nome.trim();
