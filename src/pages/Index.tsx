@@ -38,6 +38,8 @@ const Index = () => {
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
+  const [valorCampo, setValorCampo] = useState(loadValorCampo);
+  const [valorJogador, setValorJogador] = useState(loadValorJogador);
 
   // Sync from localStorage periodically (to reflect admin changes)
   useEffect(() => {
@@ -48,6 +50,8 @@ const Index = () => {
       }
       const d = localStorage.getItem("pelada-data");
       if (d) setDataPelada(d);
+      setValorCampo(loadValorCampo());
+      setValorJogador(loadValorJogador());
     };
     const interval = setInterval(sync, 2000);
     // Also listen for storage events (cross-tab sync)
