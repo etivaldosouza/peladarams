@@ -205,13 +205,20 @@ const Admin = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {j.status === "pendente" && (
+                    {j.status === "pendente" ? (
                       <button
                         onClick={() => markPaid(j.id)}
                         className="rounded-md px-2 py-1 text-xs font-medium text-white"
                         style={{ background: "hsl(142 72% 29%)" }}
                       >
-                        Confirmar
+                        ✅ Confirmar
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => markPending(j.id)}
+                        className="rounded-md px-2 py-1 text-xs font-medium border text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        ↩ Reverter
                       </button>
                     )}
                     <button
