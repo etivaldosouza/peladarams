@@ -153,7 +153,7 @@ const Index = () => {
         {/* Pix */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">💰 Pagamento via Pix</h2>
-          <p className="mb-1 text-sm text-muted-foreground">Valor por jogador: <strong className="text-foreground">R$ {VALOR_POR_JOGADOR},00</strong></p>
+          <p className="mb-1 text-sm text-muted-foreground">Valor por jogador: <strong className="text-foreground">R$ {valorJogador},00</strong></p>
           <div className="mt-2 flex items-center gap-2 rounded-lg bg-muted p-3">
             <code className="flex-1 truncate text-xs font-mono">{PIX_KEY}</code>
             <button
