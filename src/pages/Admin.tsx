@@ -36,6 +36,8 @@ const Admin = () => {
   useEffect(() => {
     const sync = () => {
       setJogadores(loadPlayers());
+      const d = localStorage.getItem("pelada-data");
+      if (d) setDataPelada(d);
     };
     const interval = setInterval(sync, 2000);
     window.addEventListener("storage", sync);
@@ -69,12 +71,16 @@ const Admin = () => {
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       const formatted = format(date, "EEEE, dd/MM", { locale: ptBR });
-      // Capitalize first letter
       const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
       setDataPelada(capitalized);
       localStorage.setItem("pelada-data", capitalized);
       setCalendarOpen(false);
     }
+  };
+
+  const markPending = (id: string) => {
+    const current = loadPlayers();
+    save(current.map((j) => (j.id === id ? { ...j, status: "pendente" } : j)));
   };
 
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
@@ -136,6 +142,7 @@ const Admin = () => {
                 <Calendar
                   mode="single"
                   onSelect={handleDateSelect}
+                  locale={ptBR}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
@@ -198,13 +205,20 @@ const Admin = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    {j.status === "pendente" && (
+                    {j.status === "pendente" ? (
                       <button
                         onClick={() => markPaid(j.id)}
                         className="rounded-md px-2 py-1 text-xs font-medium text-white"
                         style={{ background: "hsl(142 72% 29%)" }}
                       >
-                        Confirmar
+                        ✅ Confirmar
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => markPending(j.id)}
+                        className="rounded-md px-2 py-1 text-xs font-medium border text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        ↩ Reverter
                       </button>
                     )}
                     <button
