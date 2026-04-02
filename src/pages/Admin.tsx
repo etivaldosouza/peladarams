@@ -101,7 +101,7 @@ const Admin = () => {
         style={{ background: "linear-gradient(135deg, hsl(0 0% 15%), hsl(0 0% 25%))" }}
       >
         <h1 className="text-2xl font-bold tracking-tight">Painel Admin 🔧</h1>
-        <p className="mt-1 text-sm opacity-90">Gerenciamento da pelada</p>
+        <p className="mt-1 text-sm opacity-90">📅 {dataPelada} — ⏰ 20h</p>
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 pt-4">
