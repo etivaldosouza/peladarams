@@ -186,7 +186,7 @@ const Index = () => {
               <div className="text-[11px] text-muted-foreground">Arrecadado</div>
             </div>
             <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold text-foreground">R$ {VALOR_CAMPO}</div>
+              <div className="text-lg font-bold text-foreground">R$ {valorCampo}</div>
               <div className="text-[11px] text-muted-foreground">Campo</div>
             </div>
             <div className="rounded-lg bg-muted p-3">
