@@ -36,6 +36,8 @@ const Admin = () => {
   useEffect(() => {
     const sync = () => {
       setJogadores(loadPlayers());
+      const d = localStorage.getItem("pelada-data");
+      if (d) setDataPelada(d);
     };
     const interval = setInterval(sync, 2000);
     window.addEventListener("storage", sync);
