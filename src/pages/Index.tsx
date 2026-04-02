@@ -28,6 +28,7 @@ const Index = () => {
   const [nome, setNome] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
+  const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
 
   // Sync from localStorage periodically (to reflect admin changes)
   useEffect(() => {
