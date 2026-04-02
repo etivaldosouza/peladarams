@@ -40,6 +40,11 @@ const Admin = () => {
   const [jogadores, setJogadores] = useState<Jogador[]>(loadPlayers);
   const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [valorCampo, setValorCampo] = useState(loadValorCampo);
+  const [valorJogador, setValorJogador] = useState(loadValorJogador);
+  const [editingValores, setEditingValores] = useState(false);
+  const [tempValorCampo, setTempValorCampo] = useState(String(loadValorCampo()));
+  const [tempValorJogador, setTempValorJogador] = useState(String(loadValorJogador()));
 
   // Sync from localStorage periodically
   useEffect(() => {
@@ -47,6 +52,8 @@ const Admin = () => {
       setJogadores(loadPlayers());
       const d = localStorage.getItem("pelada-data");
       if (d) setDataPelada(d);
+      setValorCampo(loadValorCampo());
+      setValorJogador(loadValorJogador());
     };
     const interval = setInterval(sync, 2000);
     window.addEventListener("storage", sync);
