@@ -1,4 +1,9 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const ADMIN_PASSWORD = "admin123";
 const VALOR_POR_JOGADOR = 10;
@@ -11,26 +16,33 @@ interface Jogador {
   criadoEm: number;
 }
 
+const loadPlayers = (): Jogador[] => {
+  try {
+    const data = localStorage.getItem("pelada-jogadores");
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+};
+
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [jogadores, setJogadores] = useState<Jogador[]>([]);
+  const [jogadores, setJogadores] = useState<Jogador[]>(loadPlayers);
   const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
-  const [editandoData, setEditandoData] = useState(false);
-  const [novaData, setNovaData] = useState(dataPelada);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
+  // Sync from localStorage periodically
   useEffect(() => {
-    const data = localStorage.getItem("pelada-jogadores");
-    if (data) setJogadores(JSON.parse(data));
-  }, []);
-
-  // Sync with localStorage changes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const data = localStorage.getItem("pelada-jogadores");
-      if (data) setJogadores(JSON.parse(data));
-    }, 2000);
-    return () => clearInterval(interval);
+    const sync = () => {
+      setJogadores(loadPlayers());
+    };
+    const interval = setInterval(sync, 2000);
+    window.addEventListener("storage", sync);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   const save = (updated: Jogador[]) => {
@@ -39,11 +51,13 @@ const Admin = () => {
   };
 
   const markPaid = (id: string) => {
-    save(jogadores.map((j) => (j.id === id ? { ...j, status: "pago" } : j)));
+    const current = loadPlayers();
+    save(current.map((j) => (j.id === id ? { ...j, status: "pago" } : j)));
   };
 
   const removePlayer = (id: string) => {
-    save(jogadores.filter((j) => j.id !== id));
+    const current = loadPlayers();
+    save(current.filter((j) => j.id !== id));
   };
 
   const clearAll = () => {
@@ -52,13 +66,15 @@ const Admin = () => {
     }
   };
 
-  const salvarData = () => {
-    const trimmed = novaData.trim();
-    if (trimmed) {
-      setDataPelada(trimmed);
-      localStorage.setItem("pelada-data", trimmed);
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      const formatted = format(date, "EEEE, dd/MM", { locale: ptBR });
+      // Capitalize first letter
+      const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+      setDataPelada(capitalized);
+      localStorage.setItem("pelada-data", capitalized);
+      setCalendarOpen(false);
     }
-    setEditandoData(false);
   };
 
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
@@ -108,34 +124,24 @@ const Admin = () => {
         {/* Data da Pelada */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">📅 Data da Pelada</h2>
-          {editandoData ? (
-            <div className="flex gap-2">
-              <input
-                value={novaData}
-                onChange={(e) => setNovaData(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && salvarData()}
-                placeholder="Ex: Sexta-feira, 04/04"
-                className="flex-1 rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
-              <button
-                onClick={salvarData}
-                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
-                style={{ background: "hsl(142 72% 29%)" }}
-              >
-                Salvar
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{dataPelada}</span>
-              <button
-                onClick={() => { setNovaData(dataPelada); setEditandoData(true); }}
-                className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
-              >
-                ✏️ Editar
-              </button>
-            </div>
-          )}
+          <div className="flex items-center justify-between">
+            <span className="font-medium">{dataPelada}</span>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <button className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent">
+                  📅 Alterar data
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="single"
+                  onSelect={handleDateSelect}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </section>
 
         {/* Caixa */}

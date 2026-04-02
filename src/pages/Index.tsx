@@ -32,18 +32,22 @@ const Index = () => {
 
   // Sync from localStorage periodically (to reflect admin changes)
   useEffect(() => {
-    const interval = setInterval(() => {
+    const sync = () => {
       const data = localStorage.getItem("pelada-jogadores");
-      if (data) setJogadores(JSON.parse(data));
+      if (data) {
+        setJogadores(JSON.parse(data));
+      }
       const d = localStorage.getItem("pelada-data");
       if (d) setDataPelada(d);
-    }, 3000);
-    return () => clearInterval(interval);
+    };
+    const interval = setInterval(sync, 2000);
+    // Also listen for storage events (cross-tab sync)
+    window.addEventListener("storage", sync);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem("pelada-jogadores", JSON.stringify(jogadores));
-  }, [jogadores]);
 
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
@@ -53,13 +57,16 @@ const Index = () => {
     const trimmed = nome.trim();
     if (!trimmed) return;
 
-    if (jogadores.length >= MAX_JOGADORES) {
+    // Re-read from localStorage to get latest state
+    const current = loadPlayers();
+
+    if (current.length >= MAX_JOGADORES) {
       setErro("Lista cheia! Não há mais vagas.");
       setTimeout(() => setErro(""), 3000);
       return;
     }
 
-    const nomeExiste = jogadores.some(
+    const nomeExiste = current.some(
       (j) => j.nome.toLowerCase() === trimmed.toLowerCase()
     );
     if (nomeExiste) {
@@ -68,13 +75,15 @@ const Index = () => {
       return;
     }
 
-    setJogadores((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), nome: trimmed, status: "pendente", criadoEm: Date.now() },
-    ]);
+    const updated = [
+      ...current,
+      { id: crypto.randomUUID(), nome: trimmed, status: "pendente" as const, criadoEm: Date.now() },
+    ];
+    localStorage.setItem("pelada-jogadores", JSON.stringify(updated));
+    setJogadores(updated);
     setNome("");
     setErro("");
-  }, [nome, jogadores]);
+  }, [nome]);
 
   const copyPix = async () => {
     await navigator.clipboard.writeText(PIX_KEY);
