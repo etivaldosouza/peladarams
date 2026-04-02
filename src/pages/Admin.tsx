@@ -15,6 +15,9 @@ const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
+  const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
+  const [editandoData, setEditandoData] = useState(false);
+  const [novaData, setNovaData] = useState(dataPelada);
 
   useEffect(() => {
     const data = localStorage.getItem("pelada-jogadores");
@@ -47,6 +50,15 @@ const Admin = () => {
     if (window.confirm("Tem certeza que deseja limpar toda a lista?")) {
       save([]);
     }
+  };
+
+  const salvarData = () => {
+    const trimmed = novaData.trim();
+    if (trimmed) {
+      setDataPelada(trimmed);
+      localStorage.setItem("pelada-data", trimmed);
+    }
+    setEditandoData(false);
   };
 
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
@@ -89,10 +101,43 @@ const Admin = () => {
         style={{ background: "linear-gradient(135deg, hsl(0 0% 15%), hsl(0 0% 25%))" }}
       >
         <h1 className="text-2xl font-bold tracking-tight">Painel Admin 🔧</h1>
-        <p className="mt-1 text-sm opacity-90">Gerenciamento da pelada</p>
+        <p className="mt-1 text-sm opacity-90">📅 {dataPelada} — ⏰ 20h</p>
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 pt-4">
+        {/* Data da Pelada */}
+        <section className="rounded-xl border bg-card p-4 shadow-sm">
+          <h2 className="mb-3 text-base font-semibold">📅 Data da Pelada</h2>
+          {editandoData ? (
+            <div className="flex gap-2">
+              <input
+                value={novaData}
+                onChange={(e) => setNovaData(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && salvarData()}
+                placeholder="Ex: Sexta-feira, 04/04"
+                className="flex-1 rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={salvarData}
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+                style={{ background: "hsl(142 72% 29%)" }}
+              >
+                Salvar
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{dataPelada}</span>
+              <button
+                onClick={() => { setNovaData(dataPelada); setEditandoData(true); }}
+                className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
+              >
+                ✏️ Editar
+              </button>
+            </div>
+          )}
+        </section>
+
         {/* Caixa */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">🏦 Caixa da Pelada</h2>
