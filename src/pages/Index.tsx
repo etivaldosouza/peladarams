@@ -35,6 +35,8 @@ const Index = () => {
     const interval = setInterval(() => {
       const data = localStorage.getItem("pelada-jogadores");
       if (data) setJogadores(JSON.parse(data));
+      const d = localStorage.getItem("pelada-data");
+      if (d) setDataPelada(d);
     }, 3000);
     return () => clearInterval(interval);
   }, []);
