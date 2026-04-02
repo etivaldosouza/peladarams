@@ -99,8 +99,18 @@ const Admin = () => {
     save(current.map((j) => (j.id === id ? { ...j, status: "pendente" } : j)));
   };
 
-  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
-  const saldo = totalArrecadado - VALOR_CAMPO;
+  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
+  const saldo = totalArrecadado - valorCampo;
+
+  const saveValores = () => {
+    const vc = Number(tempValorCampo) || DEFAULT_VALOR_CAMPO;
+    const vj = Number(tempValorJogador) || DEFAULT_VALOR_POR_JOGADOR;
+    localStorage.setItem("pelada-valor-campo", String(vc));
+    localStorage.setItem("pelada-valor-jogador", String(vj));
+    setValorCampo(vc);
+    setValorJogador(vj);
+    setEditingValores(false);
+  };
 
   if (!isAuthenticated) {
     return (
