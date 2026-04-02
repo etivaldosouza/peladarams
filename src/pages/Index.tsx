@@ -92,7 +92,7 @@ const Index = () => {
         style={{ background: "linear-gradient(135deg, hsl(142 72% 25%), hsl(142 72% 35%))" }}
       >
         <h1 className="text-2xl font-bold tracking-tight">Pelada da Semana ⚽</h1>
-        <p className="mt-1 text-sm opacity-90">Organize, pague e jogue!</p>
+        <p className="mt-1 text-sm opacity-90">📅 {dataPelada} — ⏰ 20h</p>
         <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium">
           🎯 {vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""} restante${vagasRestantes !== 1 ? "s" : ""}` : "Lista cheia!"}
         </div>

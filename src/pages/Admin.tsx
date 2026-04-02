@@ -105,6 +105,39 @@ const Admin = () => {
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 pt-4">
+        {/* Data da Pelada */}
+        <section className="rounded-xl border bg-card p-4 shadow-sm">
+          <h2 className="mb-3 text-base font-semibold">📅 Data da Pelada</h2>
+          {editandoData ? (
+            <div className="flex gap-2">
+              <input
+                value={novaData}
+                onChange={(e) => setNovaData(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && salvarData()}
+                placeholder="Ex: Sexta-feira, 04/04"
+                className="flex-1 rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={salvarData}
+                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+                style={{ background: "hsl(142 72% 29%)" }}
+              >
+                Salvar
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span className="font-medium">{dataPelada}</span>
+              <button
+                onClick={() => { setNovaData(dataPelada); setEditandoData(true); }}
+                className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
+              >
+                ✏️ Editar
+              </button>
+            </div>
+          )}
+        </section>
+
         {/* Caixa */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">🏦 Caixa da Pelada</h2>
