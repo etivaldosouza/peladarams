@@ -69,12 +69,16 @@ const Admin = () => {
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       const formatted = format(date, "EEEE, dd/MM", { locale: ptBR });
-      // Capitalize first letter
       const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
       setDataPelada(capitalized);
       localStorage.setItem("pelada-data", capitalized);
       setCalendarOpen(false);
     }
+  };
+
+  const markPending = (id: string) => {
+    const current = loadPlayers();
+    save(current.map((j) => (j.id === id ? { ...j, status: "pendente" } : j)));
   };
 
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
