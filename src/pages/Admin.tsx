@@ -15,6 +15,9 @@ const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
+  const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
+  const [editandoData, setEditandoData] = useState(false);
+  const [novaData, setNovaData] = useState(dataPelada);
 
   useEffect(() => {
     const data = localStorage.getItem("pelada-jogadores");
