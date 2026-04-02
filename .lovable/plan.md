@@ -1,42 +1,29 @@
 
 
-# Pelada da Semana ⚽
+# Correção de Sincronização e Calendário em Português
 
-## Visão Geral
-Página para organizar peladas de futebol com cadastro de jogadores, pagamento via Pix e lista de confirmados. Tema verde/preto/branco com visual moderno.
+## Problemas Identificados
 
-## Funcionalidades
+1. **Sincronização dos dados**: A página admin carrega jogadores via `loadPlayers()` no `useState` inicial, mas o `useEffect` de sync pode estar sendo sobrescrito. O sync do `dataPelada` também falta no admin.
+2. **Calendário em inglês**: O componente `Calendar` não recebe a prop `locale={ptBR}`, então os dias e meses aparecem em inglês.
 
-### 1. Cadastro de Jogador
-- Campo de nome + botão "Confirmar participação"
-- Limite de 18 titulares, excedentes entram como "Reserva"
-- Contador de vagas restantes visível
+## Alterações
 
-### 2. Pagamento via Pix
-- Chave Pix exibida com botão copiar
-- QR Code estático
-- Botão "Já fiz o pagamento" que muda status para "Pago" (verde)
+### 1. `src/pages/Admin.tsx`
+- Passar `locale={ptBR}` para o componente `Calendar`
+- Garantir que o `useEffect` de sync também atualize `dataPelada` do localStorage
+- Manter os botões "Confirmar" (pagamento), "✕" (remover) e "Limpar" já existentes
+- Adicionar botão para reverter pagamento (marcar como pendente novamente)
 
-### 3. Lista de Jogadores
-- Seção "Confirmados" e "Reservas" separadas
-- Status "Pendente" (amarelo) e "Pago" (verde) ao lado de cada nome
-- Atualização em tempo real sem recarregar
+### 2. `src/pages/Index.tsx`
+- Garantir que o sync do `useEffect` não sobrescreva dados quando localStorage está vazio (condição `if (data)` já existe, mas verificar edge cases)
+- Também sincronizar `dataPelada` corretamente
 
-### 4. Caixa da Pelada
-- Total arrecadado, valor do campo (R$120) e saldo atual
+### 3. `src/components/ui/calendar.tsx`
+- Aceitar e repassar a prop `locale` ao `DayPicker` para suportar português
 
-### 5. Extras
-- Botão "Limpar lista" com confirmação
-- Animações leves (fade-in ao adicionar jogador)
-- Persistência com LocalStorage
-
-## Design
-- Cores: verde (#16a34a), preto (#111), branco
-- Mobile-first, responsivo
-- Visual limpo e intuitivo
-
-## Implementação
-- Tudo em `src/pages/Index.tsx` como componente React único
-- Dados persistidos em LocalStorage
-- Sem dependências extras
+## Detalhes Técnicos
+- O `DayPicker` do `react-day-picker` aceita `locale` como prop nativa
+- O `Calendar` wrapper precisa repassar essa prop (já faz via `...props`)
+- Ambas as páginas usam a mesma chave `pelada-jogadores` no localStorage — o sync funciona via `setInterval(2000)` dentro da mesma aba
 
