@@ -3,9 +3,18 @@ import qrCodePix from "@/assets/qrcode-pix.jpg";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
 const MAX_JOGADORES = 18;
-const VALOR_CAMPO = 120;
-const VALOR_POR_JOGADOR = 10;
+const DEFAULT_VALOR_CAMPO = 110;
+const DEFAULT_VALOR_POR_JOGADOR = 10;
 const WHATSAPP_NUMBER = "5598981986302";
+
+const loadValorCampo = () => {
+  const v = localStorage.getItem("pelada-valor-campo");
+  return v ? Number(v) : DEFAULT_VALOR_CAMPO;
+};
+const loadValorJogador = () => {
+  const v = localStorage.getItem("pelada-valor-jogador");
+  return v ? Number(v) : DEFAULT_VALOR_POR_JOGADOR;
+};
 
 interface Jogador {
   id: string;
@@ -29,6 +38,8 @@ const Index = () => {
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
+  const [valorCampo, setValorCampo] = useState(loadValorCampo);
+  const [valorJogador, setValorJogador] = useState(loadValorJogador);
 
   // Sync from localStorage periodically (to reflect admin changes)
   useEffect(() => {
@@ -39,6 +50,8 @@ const Index = () => {
       }
       const d = localStorage.getItem("pelada-data");
       if (d) setDataPelada(d);
+      setValorCampo(loadValorCampo());
+      setValorJogador(loadValorJogador());
     };
     const interval = setInterval(sync, 2000);
     // Also listen for storage events (cross-tab sync)
@@ -50,8 +63,8 @@ const Index = () => {
   }, []);
 
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
-  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
-  const saldo = totalArrecadado - VALOR_CAMPO;
+  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
+  const saldo = totalArrecadado - valorCampo;
 
   const addPlayer = useCallback(() => {
     const trimmed = nome.trim();
@@ -140,7 +153,7 @@ const Index = () => {
         {/* Pix */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">💰 Pagamento via Pix</h2>
-          <p className="mb-1 text-sm text-muted-foreground">Valor por jogador: <strong className="text-foreground">R$ {VALOR_POR_JOGADOR},00</strong></p>
+          <p className="mb-1 text-sm text-muted-foreground">Valor por jogador: <strong className="text-foreground">R$ {valorJogador},00</strong></p>
           <div className="mt-2 flex items-center gap-2 rounded-lg bg-muted p-3">
             <code className="flex-1 truncate text-xs font-mono">{PIX_KEY}</code>
             <button
@@ -173,7 +186,7 @@ const Index = () => {
               <div className="text-[11px] text-muted-foreground">Arrecadado</div>
             </div>
             <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold text-foreground">R$ {VALOR_CAMPO}</div>
+              <div className="text-lg font-bold text-foreground">R$ {valorCampo}</div>
               <div className="text-[11px] text-muted-foreground">Campo</div>
             </div>
             <div className="rounded-lg bg-muted p-3">
