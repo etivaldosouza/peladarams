@@ -3,9 +3,18 @@ import qrCodePix from "@/assets/qrcode-pix.jpg";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
 const MAX_JOGADORES = 18;
-const VALOR_CAMPO = 120;
-const VALOR_POR_JOGADOR = 10;
+const DEFAULT_VALOR_CAMPO = 110;
+const DEFAULT_VALOR_POR_JOGADOR = 10;
 const WHATSAPP_NUMBER = "5598981986302";
+
+const loadValorCampo = () => {
+  const v = localStorage.getItem("pelada-valor-campo");
+  return v ? Number(v) : DEFAULT_VALOR_CAMPO;
+};
+const loadValorJogador = () => {
+  const v = localStorage.getItem("pelada-valor-jogador");
+  return v ? Number(v) : DEFAULT_VALOR_POR_JOGADOR;
+};
 
 interface Jogador {
   id: string;
