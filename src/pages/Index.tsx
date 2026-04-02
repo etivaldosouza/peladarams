@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
+import qrCodePix from "@/assets/qrcode-pix.jpg";
 
-const PIX_KEY = "seuemail@exemplo.com";
-const MAX_TITULARES = 18;
+const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
+const MAX_JOGADORES = 18;
 const VALOR_CAMPO = 120;
 const VALOR_POR_JOGADOR = 15;
+const WHATSAPP_NUMBER = "5598981986302";
+const ADMIN_PASSWORD = "admin123";
 
 interface Jogador {
   id: string;
   nome: string;
   status: "pendente" | "pago";
-  tipo: "titular" | "reserva";
   criadoEm: number;
 }
 
@@ -27,45 +29,52 @@ const Index = () => {
   const [nome, setNome] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("pelada-admin") === "true");
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPass, setAdminPass] = useState("");
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     localStorage.setItem("pelada-jogadores", JSON.stringify(jogadores));
   }, [jogadores]);
 
-  const titulares = jogadores.filter((j) => j.tipo === "titular");
-  const reservas = jogadores.filter((j) => j.tipo === "reserva");
-  const vagasRestantes = MAX_TITULARES - titulares.length;
+  const vagasRestantes = MAX_JOGADORES - jogadores.length;
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
   const saldo = totalArrecadado - VALOR_CAMPO;
 
   const addPlayer = useCallback(() => {
     const trimmed = nome.trim();
     if (!trimmed) return;
-    const tipo = titulares.length < MAX_TITULARES ? "titular" : "reserva";
+
+    if (jogadores.length >= MAX_JOGADORES) {
+      setErro("Lista cheia! Não há mais vagas.");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
+
+    const nomeExiste = jogadores.some(
+      (j) => j.nome.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (nomeExiste) {
+      setErro("Esse nome já está na lista!");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
+
     setJogadores((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), nome: trimmed, status: "pendente", tipo, criadoEm: Date.now() },
+      { id: crypto.randomUUID(), nome: trimmed, status: "pendente", criadoEm: Date.now() },
     ]);
     setNome("");
-  }, [nome, titulares.length]);
+    setErro("");
+  }, [nome, jogadores]);
 
   const markPaid = (id: string) => {
     setJogadores((prev) => prev.map((j) => (j.id === id ? { ...j, status: "pago" } : j)));
   };
 
   const removePlayer = (id: string) => {
-    setJogadores((prev) => {
-      const updated = prev.filter((j) => j.id !== id);
-      // Promote first reserva to titular if there's now space
-      const tits = updated.filter((j) => j.tipo === "titular");
-      if (tits.length < MAX_TITULARES) {
-        const firstReserva = updated.find((j) => j.tipo === "reserva");
-        if (firstReserva) {
-          return updated.map((j) => (j.id === firstReserva.id ? { ...j, tipo: "titular" } : j));
-        }
-      }
-      return updated;
-    });
+    setJogadores((prev) => prev.filter((j) => j.id !== id));
   };
 
   const clearAll = () => {
@@ -78,6 +87,24 @@ const Index = () => {
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   };
+
+  const handleAdminLogin = () => {
+    if (adminPass === ADMIN_PASSWORD) {
+      setIsAdmin(true);
+      localStorage.setItem("pelada-admin", "true");
+      setShowAdminLogin(false);
+      setAdminPass("");
+    } else {
+      setAdminPass("");
+    }
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdmin(false);
+    localStorage.removeItem("pelada-admin");
+  };
+
+  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Olá! Segue meu comprovante de pagamento da pelada.")}`;
 
   const PlayerRow = ({ j }: { j: Jogador }) => (
     <div
@@ -102,21 +129,23 @@ const Index = () => {
         >
           {j.status === "pago" ? "✅ Pago" : "⏳ Pendente"}
         </span>
-        {j.status === "pendente" && (
+        {isAdmin && j.status === "pendente" && (
           <button
             onClick={() => markPaid(j.id)}
-            className="rounded-md px-2 py-1 text-xs font-medium transition-colors"
-            style={{ background: "hsl(142 72% 29%)", color: "white" }}
+            className="rounded-md px-2 py-1 text-xs font-medium transition-colors text-white"
+            style={{ background: "hsl(142 72% 29%)" }}
           >
-            Paguei
+            Confirmar
           </button>
         )}
-        <button
-          onClick={() => removePlayer(j.id)}
-          className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
-        >
-          ✕
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => removePlayer(j.id)}
+            className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+          >
+            ✕
+          </button>
+        )}
       </div>
     </div>
   );
@@ -136,6 +165,48 @@ const Index = () => {
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 pt-4">
+        {/* Admin toggle */}
+        <div className="text-right">
+          {isAdmin ? (
+            <button onClick={handleAdminLogout} className="text-xs text-muted-foreground underline-offset-2 hover:underline">
+              🔓 Sair do modo Admin
+            </button>
+          ) : (
+            <button onClick={() => setShowAdminLogin(true)} className="text-xs text-muted-foreground underline-offset-2 hover:underline">
+              🔒 Admin
+            </button>
+          )}
+        </div>
+
+        {showAdminLogin && (
+          <div className="rounded-xl border bg-card p-4 shadow-sm animate-fade-in">
+            <h2 className="mb-2 text-sm font-semibold">Acesso Admin</h2>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                value={adminPass}
+                onChange={(e) => setAdminPass(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
+                placeholder="Senha"
+                className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                onClick={handleAdminLogin}
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-white"
+                style={{ background: "hsl(142 72% 29%)" }}
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => { setShowAdminLogin(false); setAdminPass(""); }}
+                className="rounded-lg border px-3 py-2 text-sm"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Cadastro */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">📋 Cadastro</h2>
@@ -147,16 +218,22 @@ const Index = () => {
               placeholder="Seu nome"
               className="flex-1 rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
               maxLength={30}
+              disabled={jogadores.length >= MAX_JOGADORES}
             />
             <button
               onClick={addPlayer}
-              disabled={!nome.trim()}
+              disabled={!nome.trim() || jogadores.length >= MAX_JOGADORES}
               className="shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
               style={{ background: "hsl(142 72% 29%)" }}
             >
               Confirmar
             </button>
           </div>
+          {erro && (
+            <p className="mt-2 text-sm font-medium animate-fade-in" style={{ color: "hsl(0 84% 60%)" }}>
+              {erro}
+            </p>
+          )}
         </section>
 
         {/* Pix */}
@@ -164,7 +241,7 @@ const Index = () => {
           <h2 className="mb-3 text-base font-semibold">💰 Pagamento via Pix</h2>
           <p className="mb-1 text-sm text-muted-foreground">Valor por jogador: <strong className="text-foreground">R$ {VALOR_POR_JOGADOR},00</strong></p>
           <div className="mt-2 flex items-center gap-2 rounded-lg bg-muted p-3">
-            <code className="flex-1 truncate text-sm font-mono">{PIX_KEY}</code>
+            <code className="flex-1 truncate text-xs font-mono">{PIX_KEY}</code>
             <button
               onClick={copyPix}
               className="shrink-0 rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
@@ -172,12 +249,20 @@ const Index = () => {
               {copiado ? "✅ Copiado!" : "Copiar"}
             </button>
           </div>
-          {/* QR Code placeholder */}
+          {/* QR Code */}
           <div className="mt-3 flex justify-center">
-            <div className="flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted text-xs text-muted-foreground">
-              QR Code Pix
-            </div>
+            <img src={qrCodePix} alt="QR Code Pix" className="h-48 w-48 rounded-lg border" />
           </div>
+          {/* WhatsApp link */}
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "hsl(142 70% 40%)" }}
+          >
+            📱 Enviar comprovante via WhatsApp
+          </a>
         </section>
 
         {/* Caixa */}
@@ -203,36 +288,24 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Confirmados */}
+        {/* Jogadores */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">
-            ✅ Confirmados ({titulares.length}/{MAX_TITULARES})
+            ✅ Jogadores ({jogadores.length}/{MAX_JOGADORES})
           </h2>
-          {titulares.length === 0 ? (
+          {jogadores.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-4">Nenhum jogador confirmado ainda.</p>
           ) : (
             <div className="space-y-2">
-              {titulares.map((j) => (
+              {jogadores.map((j) => (
                 <PlayerRow key={j.id} j={j} />
               ))}
             </div>
           )}
         </section>
 
-        {/* Reservas */}
-        {reservas.length > 0 && (
-          <section className="rounded-xl border bg-card p-4 shadow-sm">
-            <h2 className="mb-3 text-base font-semibold">🔄 Reservas ({reservas.length})</h2>
-            <div className="space-y-2">
-              {reservas.map((j) => (
-                <PlayerRow key={j.id} j={j} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Limpar */}
-        {jogadores.length > 0 && (
+        {/* Limpar (admin only) */}
+        {isAdmin && jogadores.length > 0 && (
           <div className="text-center pt-2">
             {showConfirmClear ? (
               <div className="inline-flex items-center gap-2 rounded-lg border bg-card p-3 shadow-sm animate-fade-in">
