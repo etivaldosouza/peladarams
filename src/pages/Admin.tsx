@@ -177,16 +177,56 @@ const Admin = () => {
           </div>
         </section>
 
-        {/* Caixa */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-3 text-base font-semibold">🏦 Caixa da Pelada</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold">🏦 Caixa da Pelada</h2>
+            <button
+              onClick={() => {
+                setTempValorCampo(String(valorCampo));
+                setTempValorJogador(String(valorJogador));
+                setEditingValores(!editingValores);
+              }}
+              className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
+            >
+              ✏️ Editar valores
+            </button>
+          </div>
+          {editingValores && (
+            <div className="mb-3 space-y-2 rounded-lg bg-muted p-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium w-28">Valor campo:</label>
+                <input
+                  type="number"
+                  value={tempValorCampo}
+                  onChange={(e) => setTempValorCampo(e.target.value)}
+                  className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium w-28">Valor jogador:</label>
+                <input
+                  type="number"
+                  value={tempValorJogador}
+                  onChange={(e) => setTempValorJogador(e.target.value)}
+                  className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <button
+                onClick={saveValores}
+                className="w-full rounded-md px-3 py-2 text-xs font-semibold text-white"
+                style={{ background: "hsl(142 72% 29%)" }}
+              >
+                💾 Salvar valores
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-lg bg-muted p-3">
               <div className="text-lg font-bold" style={{ color: "hsl(142 72% 29%)" }}>R$ {totalArrecadado}</div>
               <div className="text-[11px] text-muted-foreground">Arrecadado</div>
             </div>
             <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold text-foreground">R$ {VALOR_CAMPO}</div>
+              <div className="text-lg font-bold text-foreground">R$ {valorCampo}</div>
               <div className="text-[11px] text-muted-foreground">Campo</div>
             </div>
             <div className="rounded-lg bg-muted p-3">
