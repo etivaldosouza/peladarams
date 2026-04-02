@@ -52,6 +52,15 @@ const Admin = () => {
     }
   };
 
+  const salvarData = () => {
+    const trimmed = novaData.trim();
+    if (trimmed) {
+      setDataPelada(trimmed);
+      localStorage.setItem("pelada-data", trimmed);
+    }
+    setEditandoData(false);
+  };
+
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * VALOR_POR_JOGADOR;
   const saldo = totalArrecadado - VALOR_CAMPO;
 
