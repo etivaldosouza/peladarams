@@ -6,8 +6,17 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 const ADMIN_PASSWORD = "admin123";
-const VALOR_POR_JOGADOR = 10;
-const VALOR_CAMPO = 120;
+const DEFAULT_VALOR_POR_JOGADOR = 10;
+const DEFAULT_VALOR_CAMPO = 110;
+
+const loadValorCampo = () => {
+  const v = localStorage.getItem("pelada-valor-campo");
+  return v ? Number(v) : DEFAULT_VALOR_CAMPO;
+};
+const loadValorJogador = () => {
+  const v = localStorage.getItem("pelada-valor-jogador");
+  return v ? Number(v) : DEFAULT_VALOR_POR_JOGADOR;
+};
 
 interface Jogador {
   id: string;
