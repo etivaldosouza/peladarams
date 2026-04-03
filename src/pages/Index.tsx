@@ -19,7 +19,6 @@ const Index = () => {
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
-  const [valorCampo, setValorCampo] = useState(110);
   const [valorJogador, setValorJogador] = useState(10);
 
   // Load initial data
