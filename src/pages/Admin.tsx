@@ -29,8 +29,8 @@ const Admin = () => {
   const [tempValorCampo, setTempValorCampo] = useState("110");
   const [tempValorJogador, setTempValorJogador] = useState("10");
   const [tempAjusteSaldo, setTempAjusteSaldo] = useState("0");
+  const [cadastroAberto, setCadastroAberto] = useState(true);
 
-  // Load initial data
   useEffect(() => {
     const fetchData = async () => {
       const { data: players } = await supabase
@@ -46,13 +46,13 @@ const Admin = () => {
           if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
           if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
           if (c.chave === "ajuste_saldo") { setAjusteSaldo(Number(c.valor)); setTempAjusteSaldo(c.valor); }
+          if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
         }
       }
     };
     fetchData();
   }, []);
 
-  // Realtime subscriptions
   useEffect(() => {
     const channel = supabase
       .channel("admin-changes")
@@ -69,6 +69,7 @@ const Admin = () => {
               if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
               if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
               if (c.chave === "ajuste_saldo") { setAjusteSaldo(Number(c.valor)); setTempAjusteSaldo(c.valor); }
+              if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
             }
           }
         });
@@ -129,6 +130,12 @@ const Admin = () => {
     setEditingSaldo(false);
   };
 
+  const toggleCadastro = async () => {
+    const newValue = !cadastroAberto;
+    setCadastroAberto(newValue);
+    await supabase.from("pelada_config").update({ valor: String(newValue) }).eq("chave", "cadastro_aberto");
+  };
+
   const WHATSAPP_NUMBER = "5598981986302";
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
   const saldo = totalArrecadado - valorCampo + ajusteSaldo;
@@ -137,21 +144,18 @@ const Admin = () => {
   const pendentes = jogadores.filter((j) => j.status === "pendente");
 
   const gerarRelatorio = () => {
-    let texto = `📊 *RELATÓRIO DA PELADA*\n`;
+    let texto = `📊 *PRESTAÇÃO DE CONTAS*\n`;
     texto += `📅 ${dataPelada} | ⏰ 20h\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
-    texto += `👥 *Jogadores:* ${jogadores.length}/18\n`;
-    texto += `🎯 *Vagas restantes:* ${vagasRestantes}\n\n`;
-    texto += `✅ *Pagos (${pagos.length}):*\n`;
-    pagos.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
-    texto += `\n⏳ *Pendentes (${pendentes.length}):*\n`;
-    pendentes.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
-    texto += `\n━━━━━━━━━━━━━━━━━━\n`;
     texto += `💰 *Financeiro:*\n`;
-    texto += `  Arrecadado: R$ ${totalArrecadado}\n`;
-    texto += `  Campo: R$ ${valorCampo}\n`;
-    texto += `  Ajuste: R$ ${ajusteSaldo}\n`;
-    texto += `  *Saldo: R$ ${saldo}*\n`;
+    texto += `  💵 Valor por jogador: R$ ${valorJogador}\n`;
+    texto += `  ✅ Pagos: ${pagos.length} jogador(es)\n`;
+    texto += `  💰 Total arrecadado: R$ ${totalArrecadado}\n`;
+    texto += `  🏟️ Custo do campo: R$ ${valorCampo}\n`;
+    if (ajusteSaldo !== 0) {
+      texto += `  🔧 Ajuste manual: R$ ${ajusteSaldo}\n`;
+    }
+    texto += `\n  📌 *Saldo final: R$ ${saldo}*\n`;
     return texto;
   };
 
@@ -247,6 +251,26 @@ const Admin = () => {
           </div>
         </section>
 
+        {/* Controle de Cadastro */}
+        <section className="rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold">📋 Cadastro de Jogadores</h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {cadastroAberto ? "O cadastro está aberto para novos jogadores." : "O cadastro está fechado."}
+              </p>
+            </div>
+            <button
+              onClick={toggleCadastro}
+              className="rounded-lg px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: cadastroAberto ? "hsl(0 84% 60%)" : "hsl(142 72% 29%)" }}
+            >
+              {cadastroAberto ? "🔒 Fechar" : "🔓 Abrir"}
+            </button>
+          </div>
+        </section>
+
+        {/* Caixa da Pelada */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold">🏦 Caixa da Pelada</h2>
@@ -399,24 +423,24 @@ const Admin = () => {
                     >
                       ✕
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
-        {/* Relatório */}
+        {/* Relatório Financeiro */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-3 text-base font-semibold">📊 Relatório</h2>
-          <p className="text-sm text-muted-foreground mb-3">Gere um relatório completo da pelada e envie direto pelo WhatsApp.</p>
+          <h2 className="mb-2 text-base font-semibold">📊 Prestação de Contas</h2>
+          <p className="text-xs text-muted-foreground mb-3">Envie o resumo financeiro da pelada pelo WhatsApp.</p>
           <button
             onClick={enviarRelatorioWhatsApp}
             className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: "hsl(142 70% 40%)" }}
           >
-            📱 Enviar relatório via WhatsApp
+            📱 Enviar via WhatsApp
           </button>
-        </section>
-      </div>
-    </div>
-              ))}
-            </div>
-          )}
         </section>
       </div>
     </div>

@@ -20,6 +20,7 @@ const Index = () => {
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
   const [valorJogador, setValorJogador] = useState(10);
+  const [cadastroAberto, setCadastroAberto] = useState(true);
 
   // Load initial data
   useEffect(() => {
@@ -35,6 +36,7 @@ const Index = () => {
         for (const c of config) {
           if (c.chave === "data_pelada") setDataPelada(c.valor);
           if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+          if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
         }
       }
     };
@@ -56,6 +58,7 @@ const Index = () => {
             for (const c of data) {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
               if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+              if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
             }
           }
         });
@@ -141,29 +144,38 @@ const Index = () => {
         {/* Cadastro */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">📋 Cadastro</h2>
-          <div className="flex gap-2">
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addPlayer()}
-              placeholder="Seu nome"
-              className="flex-1 rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-              maxLength={30}
-              disabled={jogadores.length >= MAX_JOGADORES}
-            />
-            <button
-              onClick={addPlayer}
-              disabled={!nome.trim() || jogadores.length >= MAX_JOGADORES}
-              className="shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
-              style={{ background: "hsl(142 72% 29%)" }}
-            >
-              Confirmar
-            </button>
-          </div>
-          {erro && (
-            <p className="mt-2 text-sm font-medium animate-fade-in" style={{ color: "hsl(0 84% 60%)" }}>
-              {erro}
-            </p>
+          {!cadastroAberto ? (
+            <div className="text-center py-4">
+              <p className="text-sm font-medium" style={{ color: "hsl(0 84% 60%)" }}>🔒 Cadastro fechado no momento.</p>
+              <p className="text-xs text-muted-foreground mt-1">Aguarde o administrador liberar as inscrições.</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <input
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addPlayer()}
+                  placeholder="Seu nome"
+                  className="flex-1 rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  maxLength={30}
+                  disabled={jogadores.length >= MAX_JOGADORES}
+                />
+                <button
+                  onClick={addPlayer}
+                  disabled={!nome.trim() || jogadores.length >= MAX_JOGADORES}
+                  className="shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-40"
+                  style={{ background: "hsl(142 72% 29%)" }}
+                >
+                  Confirmar
+                </button>
+              </div>
+              {erro && (
+                <p className="mt-2 text-sm font-medium animate-fade-in" style={{ color: "hsl(0 84% 60%)" }}>
+                  {erro}
+                </p>
+              )}
+            </>
           )}
         </section>
 
