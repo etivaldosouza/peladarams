@@ -236,6 +236,10 @@ const Index = () => {
           )}
         </section>
       </div>
+
+      <footer className="mt-8 pb-4 text-center text-xs text-muted-foreground">
+        Feito por <strong className="font-semibold text-foreground">Etivaldo</strong> e mantido por <strong className="font-semibold text-foreground">Display Tecnologia</strong>
+      </footer>
     </div>
   );
 };
