@@ -91,14 +91,19 @@ const Index = () => {
       return;
     }
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed });
-    if (error) {
-      setErro("Erro ao cadastrar. Tente novamente.");
-      setTimeout(() => setErro(""), 3000);
-      return;
-    }
+    // Optimistic update
+    const tempId = crypto.randomUUID();
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString() };
+    setJogadores((prev) => [...prev, novoJogador]);
     setNome("");
     setErro("");
+
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed });
+    if (error) {
+      setJogadores((prev) => prev.filter((j) => j.id !== tempId));
+      setErro("Erro ao cadastrar. Tente novamente.");
+      setTimeout(() => setErro(""), 3000);
+    }
   }, [nome, jogadores]);
 
   const copyPix = async () => {
