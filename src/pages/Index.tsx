@@ -20,6 +20,7 @@ const Index = () => {
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
   const [valorJogador, setValorJogador] = useState(10);
+  const [cadastroAberto, setCadastroAberto] = useState(true);
 
   // Load initial data
   useEffect(() => {
