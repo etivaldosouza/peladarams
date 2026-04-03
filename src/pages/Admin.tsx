@@ -74,14 +74,17 @@ const Admin = () => {
   }, []);
 
   const markPaid = async (id: string) => {
+    setJogadores((prev) => prev.map((j) => j.id === id ? { ...j, status: "pago" as const } : j));
     await supabase.from("jogadores").update({ status: "pago" }).eq("id", id);
   };
 
   const markPending = async (id: string) => {
+    setJogadores((prev) => prev.map((j) => j.id === id ? { ...j, status: "pendente" as const } : j));
     await supabase.from("jogadores").update({ status: "pendente" }).eq("id", id);
   };
 
   const removePlayer = async (id: string) => {
+    setJogadores((prev) => prev.filter((j) => j.id !== id));
     await supabase.from("jogadores").delete().eq("id", id);
   };
 
