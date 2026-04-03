@@ -59,6 +59,7 @@ const Index = () => {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
               if (c.chave === "valor_campo") setValorCampo(Number(c.valor));
               if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+              if (c.chave === "ajuste_saldo") setAjusteSaldo(Number(c.valor));
             }
           }
         });
