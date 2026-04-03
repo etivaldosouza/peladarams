@@ -4,113 +4,119 @@ import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const ADMIN_PASSWORD = "admin123";
-const DEFAULT_VALOR_POR_JOGADOR = 10;
-const DEFAULT_VALOR_CAMPO = 110;
-
-const loadValorCampo = () => {
-  const v = localStorage.getItem("pelada-valor-campo");
-  return v ? Number(v) : DEFAULT_VALOR_CAMPO;
-};
-const loadValorJogador = () => {
-  const v = localStorage.getItem("pelada-valor-jogador");
-  return v ? Number(v) : DEFAULT_VALOR_POR_JOGADOR;
-};
 
 interface Jogador {
   id: string;
   nome: string;
   status: "pendente" | "pago";
-  criadoEm: number;
+  criado_em: string;
 }
-
-const loadPlayers = (): Jogador[] => {
-  try {
-    const data = localStorage.getItem("pelada-jogadores");
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-};
 
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [jogadores, setJogadores] = useState<Jogador[]>(loadPlayers);
-  const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
+  const [jogadores, setJogadores] = useState<Jogador[]>([]);
+  const [dataPelada, setDataPelada] = useState("A definir");
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [valorCampo, setValorCampo] = useState(loadValorCampo);
-  const [valorJogador, setValorJogador] = useState(loadValorJogador);
+  const [valorCampo, setValorCampo] = useState(110);
+  const [valorJogador, setValorJogador] = useState(10);
   const [editingValores, setEditingValores] = useState(false);
-  const [tempValorCampo, setTempValorCampo] = useState(String(loadValorCampo()));
-  const [tempValorJogador, setTempValorJogador] = useState(String(loadValorJogador()));
+  const [tempValorCampo, setTempValorCampo] = useState("110");
+  const [tempValorJogador, setTempValorJogador] = useState("10");
 
-  // Sync from localStorage periodically
+  // Load initial data
   useEffect(() => {
-    const sync = () => {
-      setJogadores(loadPlayers());
-      const d = localStorage.getItem("pelada-data");
-      if (d) setDataPelada(d);
-      setValorCampo(loadValorCampo());
-      setValorJogador(loadValorJogador());
+    const fetchData = async () => {
+      const { data: players } = await supabase
+        .from("jogadores")
+        .select("*")
+        .order("criado_em", { ascending: true });
+      if (players) setJogadores(players as Jogador[]);
+
+      const { data: config } = await supabase.from("pelada_config").select("*");
+      if (config) {
+        for (const c of config) {
+          if (c.chave === "data_pelada") { setDataPelada(c.valor); }
+          if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
+          if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
+        }
+      }
     };
-    const interval = setInterval(sync, 2000);
-    window.addEventListener("storage", sync);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", sync);
-    };
+    fetchData();
   }, []);
 
-  const save = (updated: Jogador[]) => {
-    setJogadores(updated);
-    localStorage.setItem("pelada-jogadores", JSON.stringify(updated));
+  // Realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
+        supabase.from("jogadores").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
+          if (data) setJogadores(data as Jogador[]);
+        });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
+        supabase.from("pelada_config").select("*").then(({ data }) => {
+          if (data) {
+            for (const c of data) {
+              if (c.chave === "data_pelada") setDataPelada(c.valor);
+              if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
+              if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
+            }
+          }
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const markPaid = async (id: string) => {
+    await supabase.from("jogadores").update({ status: "pago" }).eq("id", id);
   };
 
-  const markPaid = (id: string) => {
-    const current = loadPlayers();
-    save(current.map((j) => (j.id === id ? { ...j, status: "pago" } : j)));
+  const markPending = async (id: string) => {
+    await supabase.from("jogadores").update({ status: "pendente" }).eq("id", id);
   };
 
-  const removePlayer = (id: string) => {
-    const current = loadPlayers();
-    save(current.filter((j) => j.id !== id));
+  const removePlayer = async (id: string) => {
+    await supabase.from("jogadores").delete().eq("id", id);
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
     if (window.confirm("Tem certeza que deseja limpar toda a lista?")) {
-      save([]);
+      // Delete all rows
+      const ids = jogadores.map((j) => j.id);
+      if (ids.length > 0) {
+        await supabase.from("jogadores").delete().in("id", ids);
+      }
     }
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
+  const handleDateSelect = async (date: Date | undefined) => {
     if (date) {
       const formatted = format(date, "EEEE, dd/MM", { locale: ptBR });
       const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
       setDataPelada(capitalized);
-      localStorage.setItem("pelada-data", capitalized);
+      await supabase.from("pelada_config").update({ valor: capitalized }).eq("chave", "data_pelada");
       setCalendarOpen(false);
     }
   };
 
-  const markPending = (id: string) => {
-    const current = loadPlayers();
-    save(current.map((j) => (j.id === id ? { ...j, status: "pendente" } : j)));
-  };
-
-  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
-  const saldo = totalArrecadado - valorCampo;
-
-  const saveValores = () => {
-    const vc = Number(tempValorCampo) || DEFAULT_VALOR_CAMPO;
-    const vj = Number(tempValorJogador) || DEFAULT_VALOR_POR_JOGADOR;
-    localStorage.setItem("pelada-valor-campo", String(vc));
-    localStorage.setItem("pelada-valor-jogador", String(vj));
+  const saveValores = async () => {
+    const vc = Number(tempValorCampo) || 110;
+    const vj = Number(tempValorJogador) || 10;
+    await supabase.from("pelada_config").update({ valor: String(vc) }).eq("chave", "valor_campo");
+    await supabase.from("pelada_config").update({ valor: String(vj) }).eq("chave", "valor_jogador");
     setValorCampo(vc);
     setValorJogador(vj);
     setEditingValores(false);
   };
+
+  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
+  const saldo = totalArrecadado - valorCampo;
 
   if (!isAuthenticated) {
     return (

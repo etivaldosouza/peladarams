@@ -1,85 +1,88 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import qrCodePix from "@/assets/qrcode-pix.jpg";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
 const MAX_JOGADORES = 18;
-const DEFAULT_VALOR_CAMPO = 110;
-const DEFAULT_VALOR_POR_JOGADOR = 10;
 const WHATSAPP_NUMBER = "5598981986302";
-
-const loadValorCampo = () => {
-  const v = localStorage.getItem("pelada-valor-campo");
-  return v ? Number(v) : DEFAULT_VALOR_CAMPO;
-};
-const loadValorJogador = () => {
-  const v = localStorage.getItem("pelada-valor-jogador");
-  return v ? Number(v) : DEFAULT_VALOR_POR_JOGADOR;
-};
 
 interface Jogador {
   id: string;
   nome: string;
   status: "pendente" | "pago";
-  criadoEm: number;
+  criado_em: string;
 }
 
-const loadPlayers = (): Jogador[] => {
-  try {
-    const data = localStorage.getItem("pelada-jogadores");
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-};
-
 const Index = () => {
-  const [jogadores, setJogadores] = useState<Jogador[]>(loadPlayers);
+  const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [nome, setNome] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
-  const [dataPelada, setDataPelada] = useState(() => localStorage.getItem("pelada-data") || "A definir");
-  const [valorCampo, setValorCampo] = useState(loadValorCampo);
-  const [valorJogador, setValorJogador] = useState(loadValorJogador);
+  const [dataPelada, setDataPelada] = useState("A definir");
+  const [valorCampo, setValorCampo] = useState(110);
+  const [valorJogador, setValorJogador] = useState(10);
 
-  // Sync from localStorage periodically (to reflect admin changes)
+  // Load initial data
   useEffect(() => {
-    const sync = () => {
-      const data = localStorage.getItem("pelada-jogadores");
-      if (data) {
-        setJogadores(JSON.parse(data));
+    const fetchData = async () => {
+      const { data: players } = await supabase
+        .from("jogadores")
+        .select("*")
+        .order("criado_em", { ascending: true });
+      if (players) setJogadores(players as Jogador[]);
+
+      const { data: config } = await supabase.from("pelada_config").select("*");
+      if (config) {
+        for (const c of config) {
+          if (c.chave === "data_pelada") setDataPelada(c.valor);
+          if (c.chave === "valor_campo") setValorCampo(Number(c.valor));
+          if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+        }
       }
-      const d = localStorage.getItem("pelada-data");
-      if (d) setDataPelada(d);
-      setValorCampo(loadValorCampo());
-      setValorJogador(loadValorJogador());
     };
-    const interval = setInterval(sync, 2000);
-    // Also listen for storage events (cross-tab sync)
-    window.addEventListener("storage", sync);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", sync);
-    };
+    fetchData();
+  }, []);
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel("public-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
+        supabase.from("jogadores").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
+          if (data) setJogadores(data as Jogador[]);
+        });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
+        supabase.from("pelada_config").select("*").then(({ data }) => {
+          if (data) {
+            for (const c of data) {
+              if (c.chave === "data_pelada") setDataPelada(c.valor);
+              if (c.chave === "valor_campo") setValorCampo(Number(c.valor));
+              if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+            }
+          }
+        });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
   const saldo = totalArrecadado - valorCampo;
 
-  const addPlayer = useCallback(() => {
+  const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
     if (!trimmed) return;
 
-    // Re-read from localStorage to get latest state
-    const current = loadPlayers();
-
-    if (current.length >= MAX_JOGADORES) {
+    if (jogadores.length >= MAX_JOGADORES) {
       setErro("Lista cheia! Não há mais vagas.");
       setTimeout(() => setErro(""), 3000);
       return;
     }
 
-    const nomeExiste = current.some(
+    const nomeExiste = jogadores.some(
       (j) => j.nome.toLowerCase() === trimmed.toLowerCase()
     );
     if (nomeExiste) {
@@ -88,15 +91,15 @@ const Index = () => {
       return;
     }
 
-    const updated = [
-      ...current,
-      { id: crypto.randomUUID(), nome: trimmed, status: "pendente" as const, criadoEm: Date.now() },
-    ];
-    localStorage.setItem("pelada-jogadores", JSON.stringify(updated));
-    setJogadores(updated);
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed });
+    if (error) {
+      setErro("Erro ao cadastrar. Tente novamente.");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
     setNome("");
     setErro("");
-  }, [nome]);
+  }, [nome, jogadores]);
 
   const copyPix = async () => {
     await navigator.clipboard.writeText(PIX_KEY);
@@ -108,7 +111,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen pb-8" style={{ background: "hsl(120 20% 96%)" }}>
-      {/* Header */}
       <header
         className="px-4 py-6 text-center text-primary-foreground"
         style={{ background: "linear-gradient(135deg, hsl(142 72% 25%), hsl(142 72% 35%))" }}
