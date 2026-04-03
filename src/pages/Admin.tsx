@@ -399,8 +399,21 @@ const Admin = () => {
                     >
                       ✕
                     </button>
-                  </div>
-                </div>
+
+        {/* Relatório */}
+        <section className="rounded-xl border bg-card p-4 shadow-sm">
+          <h2 className="mb-3 text-base font-semibold">📊 Relatório</h2>
+          <p className="text-sm text-muted-foreground mb-3">Gere um relatório completo da pelada e envie direto pelo WhatsApp.</p>
+          <button
+            onClick={enviarRelatorioWhatsApp}
+            className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "hsl(142 70% 40%)" }}
+          >
+            📱 Enviar relatório via WhatsApp
+          </button>
+        </section>
+      </div>
+    </div>
               ))}
             </div>
           )}
