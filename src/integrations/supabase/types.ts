@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      jogadores: {
+        Row: {
+          criado_em: string
+          id: string
+          nome: string
+          status: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          nome: string
+          status?: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          nome?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      pelada_config: {
+        Row: {
+          chave: string
+          id: string
+          valor: string
+        }
+        Insert: {
+          chave: string
+          id?: string
+          valor: string
+        }
+        Update: {
+          chave?: string
+          id?: string
+          valor?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
