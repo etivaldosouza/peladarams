@@ -211,25 +211,6 @@ const Index = () => {
           </a>
         </section>
 
-        {/* Caixa */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-3 text-base font-semibold">🏦 Caixa da Pelada</h2>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold" style={{ color: "hsl(142 72% 29%)" }}>R$ {totalArrecadado}</div>
-              <div className="text-[11px] text-muted-foreground">Arrecadado</div>
-            </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold text-foreground">R$ {valorCampo}</div>
-              <div className="text-[11px] text-muted-foreground">Campo</div>
-            </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold" style={{ color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" }}>R$ {saldo}</div>
-              <div className="text-[11px] text-muted-foreground">Saldo</div>
-            </div>
-          </div>
-        </section>
-
         {/* Jogadores */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">

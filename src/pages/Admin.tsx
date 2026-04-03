@@ -129,9 +129,36 @@ const Admin = () => {
     setEditingSaldo(false);
   };
 
+  const WHATSAPP_NUMBER = "5598981986302";
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
   const saldo = totalArrecadado - valorCampo + ajusteSaldo;
   const vagasRestantes = 18 - jogadores.length;
+  const pagos = jogadores.filter((j) => j.status === "pago");
+  const pendentes = jogadores.filter((j) => j.status === "pendente");
+
+  const gerarRelatorio = () => {
+    let texto = `📊 *RELATÓRIO DA PELADA*\n`;
+    texto += `📅 ${dataPelada} | ⏰ 20h\n`;
+    texto += `━━━━━━━━━━━━━━━━━━\n\n`;
+    texto += `👥 *Jogadores:* ${jogadores.length}/18\n`;
+    texto += `🎯 *Vagas restantes:* ${vagasRestantes}\n\n`;
+    texto += `✅ *Pagos (${pagos.length}):*\n`;
+    pagos.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
+    texto += `\n⏳ *Pendentes (${pendentes.length}):*\n`;
+    pendentes.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
+    texto += `\n━━━━━━━━━━━━━━━━━━\n`;
+    texto += `💰 *Financeiro:*\n`;
+    texto += `  Arrecadado: R$ ${totalArrecadado}\n`;
+    texto += `  Campo: R$ ${valorCampo}\n`;
+    texto += `  Ajuste: R$ ${ajusteSaldo}\n`;
+    texto += `  *Saldo: R$ ${saldo}*\n`;
+    return texto;
+  };
+
+  const enviarRelatorioWhatsApp = () => {
+    const texto = gerarRelatorio();
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
+  };
 
   if (!isAuthenticated) {
     return (
