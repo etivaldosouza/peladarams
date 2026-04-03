@@ -19,7 +19,6 @@ const Index = () => {
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
-  const [valorCampo, setValorCampo] = useState(110);
   const [valorJogador, setValorJogador] = useState(10);
 
   // Load initial data
@@ -35,7 +34,6 @@ const Index = () => {
       if (config) {
         for (const c of config) {
           if (c.chave === "data_pelada") setDataPelada(c.valor);
-          if (c.chave === "valor_campo") setValorCampo(Number(c.valor));
           if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
         }
       }
@@ -57,9 +55,7 @@ const Index = () => {
           if (data) {
             for (const c of data) {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
-              if (c.chave === "valor_campo") setValorCampo(Number(c.valor));
               if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
-              if (c.chave === "ajuste_saldo") setAjusteSaldo(Number(c.valor));
             }
           }
         });
@@ -69,20 +65,7 @@ const Index = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const [ajusteSaldo, setAjusteSaldo] = useState(0);
-
-  // Load ajuste_saldo from config
-  useEffect(() => {
-    const fetchAjuste = async () => {
-      const { data } = await supabase.from("pelada_config").select("*").eq("chave", "ajuste_saldo");
-      if (data && data.length > 0) setAjusteSaldo(Number(data[0].valor));
-    };
-    fetchAjuste();
-  }, []);
-
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
-  const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
-  const saldo = totalArrecadado - valorCampo + ajusteSaldo;
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
@@ -209,25 +192,6 @@ const Index = () => {
           >
             📱 Enviar comprovante via WhatsApp
           </a>
-        </section>
-
-        {/* Caixa */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-3 text-base font-semibold">🏦 Caixa da Pelada</h2>
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold" style={{ color: "hsl(142 72% 29%)" }}>R$ {totalArrecadado}</div>
-              <div className="text-[11px] text-muted-foreground">Arrecadado</div>
-            </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold text-foreground">R$ {valorCampo}</div>
-              <div className="text-[11px] text-muted-foreground">Campo</div>
-            </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold" style={{ color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" }}>R$ {saldo}</div>
-              <div className="text-[11px] text-muted-foreground">Saldo</div>
-            </div>
-          </div>
         </section>
 
         {/* Jogadores */}
