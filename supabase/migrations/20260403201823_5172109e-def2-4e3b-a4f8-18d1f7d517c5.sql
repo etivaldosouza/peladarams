@@ -1,0 +1,1 @@
+INSERT INTO public.pelada_config (chave, valor) VALUES ('ajuste_saldo', '0') ON CONFLICT DO NOTHING;
