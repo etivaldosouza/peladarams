@@ -23,9 +23,12 @@ const Admin = () => {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [valorCampo, setValorCampo] = useState(110);
   const [valorJogador, setValorJogador] = useState(10);
+  const [ajusteSaldo, setAjusteSaldo] = useState(0);
   const [editingValores, setEditingValores] = useState(false);
+  const [editingSaldo, setEditingSaldo] = useState(false);
   const [tempValorCampo, setTempValorCampo] = useState("110");
   const [tempValorJogador, setTempValorJogador] = useState("10");
+  const [tempAjusteSaldo, setTempAjusteSaldo] = useState("0");
 
   // Load initial data
   useEffect(() => {
@@ -39,9 +42,10 @@ const Admin = () => {
       const { data: config } = await supabase.from("pelada_config").select("*");
       if (config) {
         for (const c of config) {
-          if (c.chave === "data_pelada") { setDataPelada(c.valor); }
+          if (c.chave === "data_pelada") setDataPelada(c.valor);
           if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
           if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
+          if (c.chave === "ajuste_saldo") { setAjusteSaldo(Number(c.valor)); setTempAjusteSaldo(c.valor); }
         }
       }
     };
@@ -64,6 +68,7 @@ const Admin = () => {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
               if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
               if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
+              if (c.chave === "ajuste_saldo") { setAjusteSaldo(Number(c.valor)); setTempAjusteSaldo(c.valor); }
             }
           }
         });
@@ -90,7 +95,6 @@ const Admin = () => {
 
   const clearAll = async () => {
     if (window.confirm("Tem certeza que deseja limpar toda a lista?")) {
-      // Delete all rows
       const ids = jogadores.map((j) => j.id);
       if (ids.length > 0) {
         await supabase.from("jogadores").delete().in("id", ids);
@@ -118,8 +122,16 @@ const Admin = () => {
     setEditingValores(false);
   };
 
+  const saveAjusteSaldo = async () => {
+    const val = Number(tempAjusteSaldo) || 0;
+    await supabase.from("pelada_config").update({ valor: String(val) }).eq("chave", "ajuste_saldo");
+    setAjusteSaldo(val);
+    setEditingSaldo(false);
+  };
+
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
-  const saldo = totalArrecadado - valorCampo;
+  const saldo = totalArrecadado - valorCampo + ajusteSaldo;
+  const vagasRestantes = 18 - jogadores.length;
 
   if (!isAuthenticated) {
     return (
@@ -158,10 +170,32 @@ const Admin = () => {
         style={{ background: "linear-gradient(135deg, hsl(0 0% 15%), hsl(0 0% 25%))" }}
       >
         <h1 className="text-2xl font-bold tracking-tight">Painel Admin 🔧</h1>
-        <p className="mt-1 text-sm opacity-90">📅 {dataPelada} — ⏰ 20h</p>
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 pt-4">
+        {/* Info destaque */}
+        <section className="rounded-xl border-2 p-4 shadow-md" style={{ borderColor: "hsl(142 72% 29%)", background: "hsl(142 72% 29% / 0.08)" }}>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div>
+              <div className="text-2xl mb-1">📅</div>
+              <div className="text-sm font-bold text-foreground">{dataPelada}</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Data</div>
+            </div>
+            <div>
+              <div className="text-2xl mb-1">⏰</div>
+              <div className="text-sm font-bold text-foreground">20h</div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Horário</div>
+            </div>
+            <div>
+              <div className="text-2xl mb-1">🎯</div>
+              <div className="text-sm font-bold" style={{ color: vagasRestantes > 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" }}>
+                {vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""}` : "Lotado!"}
+              </div>
+              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Restantes</div>
+            </div>
+          </div>
+        </section>
+
         {/* Data da Pelada */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-3 text-base font-semibold">📅 Data da Pelada</h2>
@@ -243,6 +277,42 @@ const Admin = () => {
               <div className="text-[11px] text-muted-foreground">Saldo</div>
             </div>
           </div>
+
+          {/* Ajuste manual do saldo */}
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Ajuste manual: <strong className="text-foreground">R$ {ajusteSaldo}</strong></span>
+            <button
+              onClick={() => {
+                setTempAjusteSaldo(String(ajusteSaldo));
+                setEditingSaldo(!editingSaldo);
+              }}
+              className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
+            >
+              ✏️ Ajustar saldo
+            </button>
+          </div>
+          {editingSaldo && (
+            <div className="mt-2 space-y-2 rounded-lg bg-muted p-3">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium w-28">Ajuste (R$):</label>
+                <input
+                  type="number"
+                  value={tempAjusteSaldo}
+                  onChange={(e) => setTempAjusteSaldo(e.target.value)}
+                  placeholder="Ex: 20 ou -15"
+                  className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Valor positivo aumenta o saldo, negativo diminui.</p>
+              <button
+                onClick={saveAjusteSaldo}
+                className="w-full rounded-md px-3 py-2 text-xs font-semibold text-white"
+                style={{ background: "hsl(142 72% 29%)" }}
+              >
+                💾 Salvar ajuste
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Jogadores */}

@@ -68,9 +68,20 @@ const Index = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const [ajusteSaldo, setAjusteSaldo] = useState(0);
+
+  // Load ajuste_saldo from config
+  useEffect(() => {
+    const fetchAjuste = async () => {
+      const { data } = await supabase.from("pelada_config").select("*").eq("chave", "ajuste_saldo");
+      if (data && data.length > 0) setAjusteSaldo(Number(data[0].valor));
+    };
+    fetchAjuste();
+  }, []);
+
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
-  const saldo = totalArrecadado - valorCampo;
+  const saldo = totalArrecadado - valorCampo + ajusteSaldo;
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
