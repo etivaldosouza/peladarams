@@ -58,6 +58,7 @@ const Index = () => {
             for (const c of data) {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
               if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+              if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
             }
           }
         });
