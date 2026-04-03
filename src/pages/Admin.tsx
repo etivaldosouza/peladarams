@@ -152,9 +152,6 @@ const Admin = () => {
     texto += `  ✅ Pagos: ${pagos.length} jogador(es)\n`;
     texto += `  💰 Total arrecadado: R$ ${totalArrecadado}\n`;
     texto += `  🏟️ Custo do campo: R$ ${valorCampo}\n`;
-    if (ajusteSaldo !== 0) {
-      texto += `  🔧 Ajuste manual: R$ ${ajusteSaldo}\n`;
-    }
     texto += `\n  📌 *Saldo final: R$ ${saldo}*\n`;
     return texto;
   };
