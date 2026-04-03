@@ -138,7 +138,7 @@ const Admin = () => {
 
   const WHATSAPP_NUMBER = "5598981986302";
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
-  const saldo = totalArrecadado - valorCampo + ajusteSaldo;
+  const saldo = totalArrecadado - valorCampo;
   const vagasRestantes = 18 - jogadores.length;
   const pagos = jogadores.filter((j) => j.status === "pago");
   const pendentes = jogadores.filter((j) => j.status === "pendente");
