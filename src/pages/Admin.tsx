@@ -325,6 +325,8 @@ const Admin = () => {
               <div className="text-[11px] text-muted-foreground">Saldo</div>
             </div>
           </div>
+        </section>
+
         {/* Jogadores */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
