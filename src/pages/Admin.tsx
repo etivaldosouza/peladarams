@@ -325,44 +325,6 @@ const Admin = () => {
               <div className="text-[11px] text-muted-foreground">Saldo</div>
             </div>
           </div>
-
-          {/* Ajuste manual do saldo */}
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Ajuste manual: <strong className="text-foreground">R$ {ajusteSaldo}</strong></span>
-            <button
-              onClick={() => {
-                setTempAjusteSaldo(String(ajusteSaldo));
-                setEditingSaldo(!editingSaldo);
-              }}
-              className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
-            >
-              ✏️ Ajustar saldo
-            </button>
-          </div>
-          {editingSaldo && (
-            <div className="mt-2 space-y-2 rounded-lg bg-muted p-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-medium w-28">Ajuste (R$):</label>
-                <input
-                  type="number"
-                  value={tempAjusteSaldo}
-                  onChange={(e) => setTempAjusteSaldo(e.target.value)}
-                  placeholder="Ex: 20 ou -15"
-                  className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <p className="text-[10px] text-muted-foreground">Valor positivo aumenta o saldo, negativo diminui.</p>
-              <button
-                onClick={saveAjusteSaldo}
-                className="w-full rounded-md px-3 py-2 text-xs font-semibold text-white"
-                style={{ background: "hsl(142 72% 29%)" }}
-              >
-                💾 Salvar ajuste
-              </button>
-            </div>
-          )}
-        </section>
-
         {/* Jogadores */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
