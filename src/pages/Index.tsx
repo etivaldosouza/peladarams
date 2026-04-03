@@ -34,7 +34,6 @@ const Index = () => {
       if (config) {
         for (const c of config) {
           if (c.chave === "data_pelada") setDataPelada(c.valor);
-          if (c.chave === "valor_campo") setValorCampo(Number(c.valor));
           if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
         }
       }
