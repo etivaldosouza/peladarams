@@ -59,6 +59,7 @@ const Index = () => {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
               if (c.chave === "valor_campo") setValorCampo(Number(c.valor));
               if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+              if (c.chave === "ajuste_saldo") setAjusteSaldo(Number(c.valor));
             }
           }
         });
@@ -68,9 +69,20 @@ const Index = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const [ajusteSaldo, setAjusteSaldo] = useState(0);
+
+  // Load ajuste_saldo from config
+  useEffect(() => {
+    const fetchAjuste = async () => {
+      const { data } = await supabase.from("pelada_config").select("*").eq("chave", "ajuste_saldo");
+      if (data && data.length > 0) setAjusteSaldo(Number(data[0].valor));
+    };
+    fetchAjuste();
+  }, []);
+
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
-  const saldo = totalArrecadado - valorCampo;
+  const saldo = totalArrecadado - valorCampo + ajusteSaldo;
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
@@ -121,9 +133,24 @@ const Index = () => {
         style={{ background: "linear-gradient(135deg, hsl(142 72% 25%), hsl(142 72% 35%))" }}
       >
         <h1 className="text-2xl font-bold tracking-tight">Pelada da Semana ⚽</h1>
-        <p className="mt-1 text-sm opacity-90">📅 {dataPelada} — ⏰ 20h</p>
-        <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium">
-          🎯 {vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""} restante${vagasRestantes !== 1 ? "s" : ""}` : "Lista cheia!"}
+        <div className="mt-4 grid grid-cols-3 gap-3 max-w-sm mx-auto">
+          <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
+            <div className="text-lg">📅</div>
+            <div className="text-sm font-bold leading-tight">{dataPelada}</div>
+            <div className="text-[10px] opacity-75 uppercase tracking-wide">Data</div>
+          </div>
+          <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
+            <div className="text-lg">⏰</div>
+            <div className="text-sm font-bold">20h</div>
+            <div className="text-[10px] opacity-75 uppercase tracking-wide">Horário</div>
+          </div>
+          <div className="rounded-xl bg-white/15 backdrop-blur-sm px-3 py-2.5">
+            <div className="text-lg">🎯</div>
+            <div className="text-sm font-bold">
+              {vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""}` : "Lotado!"}
+            </div>
+            <div className="text-[10px] opacity-75 uppercase tracking-wide">Restantes</div>
+          </div>
         </div>
       </header>
 
