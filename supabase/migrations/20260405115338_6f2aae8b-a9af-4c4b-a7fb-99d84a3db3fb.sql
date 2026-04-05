@@ -1,0 +1,1 @@
+ALTER TABLE public.jogadores ADD COLUMN dispositivo_id text;

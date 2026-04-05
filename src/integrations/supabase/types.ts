@@ -17,18 +17,21 @@ export type Database = {
       jogadores: {
         Row: {
           criado_em: string
+          dispositivo_id: string | null
           id: string
           nome: string
           status: string
         }
         Insert: {
           criado_em?: string
+          dispositivo_id?: string | null
           id?: string
           nome: string
           status?: string
         }
         Update: {
           criado_em?: string
+          dispositivo_id?: string | null
           id?: string
           nome?: string
           status?: string
