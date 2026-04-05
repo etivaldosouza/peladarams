@@ -5,12 +5,14 @@ import qrCodePix from "@/assets/qrcode-pix.jpg";
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
 const MAX_JOGADORES = 18;
 const WHATSAPP_NUMBER = "5598981986302";
+const STORAGE_KEY = "jogador_id";
 
 interface Jogador {
   id: string;
   nome: string;
   status: "pendente" | "pago";
   criado_em: string;
+  dispositivo_id?: string | null;
 }
 
 const Index = () => {
@@ -21,6 +23,29 @@ const Index = () => {
   const [dataPelada, setDataPelada] = useState("A definir");
   const [valorJogador, setValorJogador] = useState(10);
   const [cadastroAberto, setCadastroAberto] = useState(true);
+  const [meuJogador, setMeuJogador] = useState<Jogador | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  // Get or create device ID
+  const getDispositivoId = useCallback(() => {
+    let id = localStorage.getItem(STORAGE_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(STORAGE_KEY, id);
+    }
+    return id;
+  }, []);
+
+  // Check if current device already has a registered player
+  const verificarInscricao = useCallback((players: Jogador[]) => {
+    const dispositivoId = localStorage.getItem(STORAGE_KEY);
+    if (dispositivoId) {
+      const encontrado = players.find((j) => j.dispositivo_id === dispositivoId);
+      setMeuJogador(encontrado || null);
+    } else {
+      setMeuJogador(null);
+    }
+  }, []);
 
   // Load initial data
   useEffect(() => {
@@ -29,7 +54,11 @@ const Index = () => {
         .from("jogadores")
         .select("*")
         .order("criado_em", { ascending: true });
-      if (players) setJogadores(players as Jogador[]);
+      if (players) {
+        const typed = players as Jogador[];
+        setJogadores(typed);
+        verificarInscricao(typed);
+      }
 
       const { data: config } = await supabase.from("pelada_config").select("*");
       if (config) {
@@ -39,9 +68,10 @@ const Index = () => {
           if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
         }
       }
+      setCarregando(false);
     };
     fetchData();
-  }, []);
+  }, [verificarInscricao]);
 
   // Realtime subscriptions
   useEffect(() => {
@@ -49,7 +79,11 @@ const Index = () => {
       .channel("public-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
         supabase.from("jogadores").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
-          if (data) setJogadores(data as Jogador[]);
+          if (data) {
+            const typed = data as Jogador[];
+            setJogadores(typed);
+            verificarInscricao(typed);
+          }
         });
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
@@ -66,13 +100,19 @@ const Index = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [verificarInscricao]);
 
   const vagasRestantes = MAX_JOGADORES - jogadores.length;
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
     if (!trimmed) return;
+
+    if (meuJogador) {
+      setErro("Você já está inscrito nesta pelada!");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
 
     if (jogadores.length >= MAX_JOGADORES) {
       setErro("Lista cheia! Não há mais vagas.");
@@ -89,20 +129,57 @@ const Index = () => {
       return;
     }
 
+    const dispositivoId = getDispositivoId();
+
+    // Check server-side if device already registered
+    const { data: existing } = await supabase
+      .from("jogadores")
+      .select("id")
+      .eq("dispositivo_id", dispositivoId)
+      .maybeSingle();
+
+    if (existing) {
+      setErro("Você já está inscrito nesta pelada!");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
+
     // Optimistic update
     const tempId = crypto.randomUUID();
-    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString() };
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId };
     setJogadores((prev) => [...prev, novoJogador]);
+    setMeuJogador(novoJogador);
     setNome("");
     setErro("");
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed });
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId });
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
+      setMeuJogador(null);
       setErro("Erro ao cadastrar. Tente novamente.");
       setTimeout(() => setErro(""), 3000);
     }
-  }, [nome, jogadores]);
+  }, [nome, jogadores, meuJogador, getDispositivoId]);
+
+  const sairDaLista = useCallback(async () => {
+    if (!meuJogador) return;
+
+    const jogadorId = meuJogador.id;
+    // Optimistic
+    setJogadores((prev) => prev.filter((j) => j.id !== jogadorId));
+    setMeuJogador(null);
+
+    const { error } = await supabase.from("jogadores").delete().eq("dispositivo_id", localStorage.getItem(STORAGE_KEY) || "");
+    if (error) {
+      // Revert on failure - refetch
+      const { data } = await supabase.from("jogadores").select("*").order("criado_em", { ascending: true });
+      if (data) {
+        const typed = data as Jogador[];
+        setJogadores(typed);
+        verificarInscricao(typed);
+      }
+    }
+  }, [meuJogador, verificarInscricao]);
 
   const copyPix = async () => {
     await navigator.clipboard.writeText(PIX_KEY);
@@ -111,6 +188,14 @@ const Index = () => {
   };
 
   const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Olá! Segue meu comprovante de pagamento da pelada.")}`;
+
+  if (carregando) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(120 20% 96%)" }}>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-8" style={{ background: "hsl(120 20% 96%)" }}>
@@ -148,6 +233,21 @@ const Index = () => {
             <div className="text-center py-4">
               <p className="text-sm font-medium" style={{ color: "hsl(0 84% 60%)" }}>🔒 Cadastro fechado no momento.</p>
               <p className="text-xs text-muted-foreground mt-1">Aguarde o administrador liberar as inscrições.</p>
+            </div>
+          ) : meuJogador ? (
+            <div className="text-center py-3 space-y-3">
+              <div className="rounded-lg p-3" style={{ background: "hsl(142 72% 29% / 0.08)", border: "1px solid hsl(142 72% 29% / 0.2)" }}>
+                <p className="text-sm font-medium" style={{ color: "hsl(142 72% 29%)" }}>
+                  ✅ Você está inscrito como <strong>{meuJogador.nome}</strong>
+                </p>
+              </div>
+              <button
+                onClick={sairDaLista}
+                className="rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                style={{ color: "hsl(0 84% 60%)", borderColor: "hsl(0 84% 60% / 0.3)" }}
+              >
+                🚪 Sair da lista
+              </button>
             </div>
           ) : (
             <>
