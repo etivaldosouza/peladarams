@@ -413,16 +413,30 @@ const Admin = () => {
           )}
         </section>
 
-        {/* Relatório Financeiro */}
+        {/* Relatório de Jogadores */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-2 text-base font-semibold">📊 Prestação de Contas</h2>
-          <p className="text-xs text-muted-foreground mb-3">Envie o resumo financeiro da pelada pelo WhatsApp.</p>
+          <h2 className="mb-2 text-base font-semibold">📋 Relatório de Jogadores</h2>
+          <p className="text-xs text-muted-foreground mb-3">Envie a lista de jogadores com status de pagamento.</p>
+          <div className="mb-3 rounded-lg bg-muted p-3 text-xs space-y-1">
+            <div className="flex justify-between">
+              <span>✅ Pagos:</span>
+              <span className="font-semibold" style={{ color: "hsl(142 72% 29%)" }}>{pagos.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>⏳ Pendentes:</span>
+              <span className="font-semibold" style={{ color: "hsl(30 80% 35%)" }}>{pendentes.length}</span>
+            </div>
+            <div className="flex justify-between border-t pt-1 mt-1">
+              <span className="font-medium">👥 Total:</span>
+              <span className="font-bold">{jogadores.length}/18</span>
+            </div>
+          </div>
           <button
-            onClick={enviarRelatorioWhatsApp}
+            onClick={enviarRelatorioJogadoresWhatsApp}
             className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ background: "hsl(142 70% 40%)" }}
           >
-            📱 Enviar via WhatsApp
+            📱 Enviar lista via WhatsApp
           </button>
         </section>
       </div>
