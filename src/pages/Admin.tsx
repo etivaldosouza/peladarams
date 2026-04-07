@@ -156,8 +156,30 @@ const Admin = () => {
     return texto;
   };
 
+  const gerarRelatorioJogadores = () => {
+    let texto = `📋 *RELATÓRIO DE JOGADORES*\n`;
+    texto += `📅 ${dataPelada} | ⏰ 20h\n`;
+    texto += `━━━━━━━━━━━━━━━━━━\n\n`;
+    texto += `👥 Total: ${jogadores.length}/18\n\n`;
+    if (pagos.length > 0) {
+      texto += `✅ *Pagos (${pagos.length}):*\n`;
+      pagos.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
+      texto += `\n`;
+    }
+    if (pendentes.length > 0) {
+      texto += `⏳ *Pendentes (${pendentes.length}):*\n`;
+      pendentes.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
+    }
+    return texto;
+  };
+
   const enviarRelatorioWhatsApp = () => {
     const texto = gerarRelatorio();
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
+  };
+
+  const enviarRelatorioJogadoresWhatsApp = () => {
+    const texto = gerarRelatorioJogadores();
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
   };
 
