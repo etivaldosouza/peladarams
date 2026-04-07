@@ -413,6 +413,19 @@ const Admin = () => {
           )}
         </section>
 
+        {/* Relatório Financeiro */}
+        <section className="rounded-xl border bg-card p-4 shadow-sm">
+          <h2 className="mb-2 text-base font-semibold">📊 Prestação de Contas</h2>
+          <p className="text-xs text-muted-foreground mb-3">Envie o resumo financeiro da pelada pelo WhatsApp.</p>
+          <button
+            onClick={enviarRelatorioWhatsApp}
+            className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "hsl(142 70% 40%)" }}
+          >
+            📱 Enviar via WhatsApp
+          </button>
+        </section>
+
         {/* Relatório de Jogadores */}
         <section className="rounded-xl border bg-card p-4 shadow-sm">
           <h2 className="mb-2 text-base font-semibold">📋 Relatório de Jogadores</h2>
