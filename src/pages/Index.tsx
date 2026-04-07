@@ -315,7 +315,7 @@ const Index = () => {
             <p className="text-center text-sm text-muted-foreground py-4">Nenhum jogador confirmado ainda.</p>
           ) : (
             <div className="space-y-2">
-              {jogadores.map((j) => (
+              {[...jogadores].sort((a, b) => (a.status === "pago" ? -1 : 1) - (b.status === "pago" ? -1 : 1)).map((j) => (
                 <div
                   key={j.id}
                   className="animate-fade-in flex items-center justify-between rounded-lg border p-3"
