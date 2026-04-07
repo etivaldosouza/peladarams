@@ -156,8 +156,30 @@ const Admin = () => {
     return texto;
   };
 
+  const gerarRelatorioJogadores = () => {
+    let texto = `📋 *RELATÓRIO DE JOGADORES*\n`;
+    texto += `📅 ${dataPelada} | ⏰ 20h\n`;
+    texto += `━━━━━━━━━━━━━━━━━━\n\n`;
+    texto += `👥 Total: ${jogadores.length}/18\n\n`;
+    if (pagos.length > 0) {
+      texto += `✅ *Pagos (${pagos.length}):*\n`;
+      pagos.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
+      texto += `\n`;
+    }
+    if (pendentes.length > 0) {
+      texto += `⏳ *Pendentes (${pendentes.length}):*\n`;
+      pendentes.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
+    }
+    return texto;
+  };
+
   const enviarRelatorioWhatsApp = () => {
     const texto = gerarRelatorio();
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
+  };
+
+  const enviarRelatorioJogadoresWhatsApp = () => {
+    const texto = gerarRelatorioJogadores();
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
   };
 
@@ -401,6 +423,33 @@ const Admin = () => {
             style={{ background: "hsl(142 70% 40%)" }}
           >
             📱 Enviar via WhatsApp
+          </button>
+        </section>
+
+        {/* Relatório de Jogadores */}
+        <section className="rounded-xl border bg-card p-4 shadow-sm">
+          <h2 className="mb-2 text-base font-semibold">📋 Relatório de Jogadores</h2>
+          <p className="text-xs text-muted-foreground mb-3">Envie a lista de jogadores com status de pagamento.</p>
+          <div className="mb-3 rounded-lg bg-muted p-3 text-xs space-y-1">
+            <div className="flex justify-between">
+              <span>✅ Pagos:</span>
+              <span className="font-semibold" style={{ color: "hsl(142 72% 29%)" }}>{pagos.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>⏳ Pendentes:</span>
+              <span className="font-semibold" style={{ color: "hsl(30 80% 35%)" }}>{pendentes.length}</span>
+            </div>
+            <div className="flex justify-between border-t pt-1 mt-1">
+              <span className="font-medium">👥 Total:</span>
+              <span className="font-bold">{jogadores.length}/18</span>
+            </div>
+          </div>
+          <button
+            onClick={enviarRelatorioJogadoresWhatsApp}
+            className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ background: "hsl(142 70% 40%)" }}
+          >
+            📱 Enviar lista via WhatsApp
           </button>
         </section>
       </div>
