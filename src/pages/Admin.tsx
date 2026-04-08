@@ -23,12 +23,9 @@ const Admin = () => {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [valorCampo, setValorCampo] = useState(110);
   const [valorJogador, setValorJogador] = useState(10);
-  const [ajusteSaldo, setAjusteSaldo] = useState(0);
   const [editingValores, setEditingValores] = useState(false);
-  const [editingSaldo, setEditingSaldo] = useState(false);
   const [tempValorCampo, setTempValorCampo] = useState("110");
   const [tempValorJogador, setTempValorJogador] = useState("10");
-  const [tempAjusteSaldo, setTempAjusteSaldo] = useState("0");
   const [cadastroAberto, setCadastroAberto] = useState(true);
 
   useEffect(() => {
@@ -45,7 +42,6 @@ const Admin = () => {
           if (c.chave === "data_pelada") setDataPelada(c.valor);
           if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
           if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
-          if (c.chave === "ajuste_saldo") { setAjusteSaldo(Number(c.valor)); setTempAjusteSaldo(c.valor); }
           if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
         }
       }
@@ -68,7 +64,6 @@ const Admin = () => {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
               if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
               if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
-              if (c.chave === "ajuste_saldo") { setAjusteSaldo(Number(c.valor)); setTempAjusteSaldo(c.valor); }
               if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
             }
           }
@@ -123,13 +118,6 @@ const Admin = () => {
     setEditingValores(false);
   };
 
-  const saveAjusteSaldo = async () => {
-    const val = Number(tempAjusteSaldo) || 0;
-    await supabase.from("pelada_config").update({ valor: String(val) }).eq("chave", "ajuste_saldo");
-    setAjusteSaldo(val);
-    setEditingSaldo(false);
-  };
-
   const toggleCadastro = async () => {
     const newValue = !cadastroAberto;
     setCadastroAberto(newValue);
@@ -142,6 +130,11 @@ const Admin = () => {
   const vagasRestantes = 18 - jogadores.length;
   const pagos = jogadores.filter((j) => j.status === "pago");
   const pendentes = jogadores.filter((j) => j.status === "pendente");
+  const sortedJogadores = [...jogadores].sort((a, b) => {
+    if (a.status === "pago" && b.status !== "pago") return -1;
+    if (a.status !== "pago" && b.status === "pago") return 1;
+    return 0;
+  });
 
   const gerarRelatorio = () => {
     let texto = `📊 *PRESTAÇÃO DE CONTAS*\n`;
@@ -185,25 +178,30 @@ const Admin = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(120 20% 96%)" }}>
-        <div className="rounded-xl border bg-card p-6 shadow-sm w-full max-w-sm mx-4">
-          <h1 className="text-xl font-bold mb-4 text-center">🔒 Painel Admin</h1>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="rounded-2xl border bg-card p-8 shadow-lg w-full max-w-sm mx-4">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 mb-3">
+              <span className="text-2xl">🔒</span>
+            </div>
+            <h1 className="text-xl font-extrabold">Painel Admin</h1>
+            <p className="text-xs text-muted-foreground mt-1">Acesso restrito ao administrador</p>
+          </div>
           <div className="space-y-3">
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && password === ADMIN_PASSWORD && setIsAuthenticated(true)}
-              placeholder="Senha"
-              className="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Digite a senha..."
+              className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-ring focus:border-primary"
             />
             <button
               onClick={() => {
                 if (password === ADMIN_PASSWORD) setIsAuthenticated(true);
                 else setPassword("");
               }}
-              className="w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
-              style={{ background: "hsl(142 72% 29%)" }}
+              className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
             >
               Entrar
             </button>
@@ -214,47 +212,56 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen pb-8" style={{ background: "hsl(120 20% 96%)" }}>
-      <header
-        className="px-4 py-6 text-center text-primary-foreground"
-        style={{ background: "linear-gradient(135deg, hsl(0 0% 15%), hsl(0 0% 25%))" }}
+    <div className="min-h-screen bg-background pb-8">
+      {/* Header */}
+      <header className="relative overflow-hidden px-4 py-6 text-center text-white"
+        style={{ background: "linear-gradient(135deg, hsl(0 0% 12%), hsl(0 0% 22%))" }}
       >
-        <h1 className="text-2xl font-bold tracking-tight">Painel Admin 🔧</h1>
+        <div className="absolute inset-0 opacity-5"
+          style={{ backgroundImage: "radial-gradient(circle at 30% 70%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}
+        />
+        <div className="relative">
+          <h1 className="text-xl font-extrabold tracking-tight">Painel Admin 🔧</h1>
+          <p className="text-xs opacity-60 mt-1">Gerencie sua pelada com facilidade</p>
+        </div>
       </header>
 
-      <div className="mx-auto max-w-lg space-y-4 px-4 pt-4">
-        {/* Info destaque */}
-        <section className="rounded-xl border-2 p-4 shadow-md" style={{ borderColor: "hsl(142 72% 29%)", background: "hsl(142 72% 29% / 0.08)" }}>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <div className="text-2xl mb-1">📅</div>
-              <div className="text-sm font-bold text-foreground">{dataPelada}</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Data</div>
-            </div>
-            <div>
-              <div className="text-2xl mb-1">⏰</div>
-              <div className="text-sm font-bold text-foreground">20h</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Horário</div>
-            </div>
-            <div>
-              <div className="text-2xl mb-1">🎯</div>
-              <div className="text-sm font-bold" style={{ color: vagasRestantes > 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" }}>
-                {vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""}` : "Lotado!"}
-              </div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wide">Restantes</div>
-            </div>
+      <div className="mx-auto max-w-lg space-y-5 px-4 py-5">
+        {/* Stats cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl border bg-card p-3 text-center shadow-sm">
+            <div className="text-lg mb-1">📅</div>
+            <div className="text-xs font-bold text-foreground leading-tight">{dataPelada}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-widest mt-0.5">Data</div>
           </div>
-        </section>
+          <div className="rounded-2xl border bg-card p-3 text-center shadow-sm">
+            <div className="text-lg mb-1">👥</div>
+            <div className="text-xs font-bold text-foreground">{jogadores.length}/18</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-widest mt-0.5">Jogadores</div>
+          </div>
+          <div className="rounded-2xl border bg-card p-3 text-center shadow-sm">
+            <div className="text-lg mb-1">💰</div>
+            <div className="text-xs font-bold" style={{ color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" }}>R$ {saldo}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-widest mt-0.5">Saldo</div>
+          </div>
+        </div>
 
         {/* Data da Pelada */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-3 text-base font-semibold">📅 Data da Pelada</h2>
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="font-medium">{dataPelada}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10">
+                <span className="text-base">📅</span>
+              </div>
+              <div>
+                <h2 className="text-sm font-bold">Data da Pelada</h2>
+                <p className="text-xs text-muted-foreground">{dataPelada}</p>
+              </div>
+            </div>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
-                <button className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent">
-                  📅 Alterar data
+                <button className="rounded-xl border px-3 py-2 text-xs font-semibold transition-all hover:bg-muted active:scale-95">
+                  Alterar
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="end">
@@ -271,17 +278,22 @@ const Admin = () => {
         </section>
 
         {/* Controle de Cadastro */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold">📋 Cadastro de Jogadores</h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                {cadastroAberto ? "O cadastro está aberto para novos jogadores." : "O cadastro está fechado."}
-              </p>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10">
+                <span className="text-base">📋</span>
+              </div>
+              <div>
+                <h2 className="text-sm font-bold">Cadastro de Jogadores</h2>
+                <p className="text-xs text-muted-foreground">
+                  {cadastroAberto ? "Aberto para inscrições" : "Fechado para inscrições"}
+                </p>
+              </div>
             </div>
             <button
               onClick={toggleCadastro}
-              className="rounded-lg px-4 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+              className="rounded-xl px-4 py-2 text-xs font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-95"
               style={{ background: cadastroAberto ? "hsl(0 84% 60%)" : "hsl(142 72% 29%)" }}
             >
               {cadastroAberto ? "🔒 Fechar" : "🔓 Abrir"}
@@ -290,93 +302,116 @@ const Admin = () => {
         </section>
 
         {/* Caixa da Pelada */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold">🏦 Caixa da Pelada</h2>
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10">
+                <span className="text-base">🏦</span>
+              </div>
+              <h2 className="text-sm font-bold">Caixa da Pelada</h2>
+            </div>
             <button
               onClick={() => {
                 setTempValorCampo(String(valorCampo));
                 setTempValorJogador(String(valorJogador));
                 setEditingValores(!editingValores);
               }}
-              className="rounded-md border px-3 py-1 text-xs font-medium transition-colors hover:bg-accent"
+              className="rounded-xl border px-3 py-2 text-xs font-semibold transition-all hover:bg-muted active:scale-95"
             >
-              ✏️ Editar valores
+              ✏️ Editar
             </button>
           </div>
+
           {editingValores && (
-            <div className="mb-3 space-y-2 rounded-lg bg-muted p-3">
+            <div className="mb-4 space-y-2 rounded-xl bg-muted/50 border p-4">
               <div className="flex items-center gap-2">
-                <label className="text-xs font-medium w-28">Valor campo:</label>
+                <label className="text-xs font-semibold w-28">Valor campo:</label>
                 <input
                   type="number"
                   value={tempValorCampo}
                   onChange={(e) => setTempValorCampo(e.target.value)}
-                  className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs font-medium w-28">Valor jogador:</label>
+                <label className="text-xs font-semibold w-28">Valor jogador:</label>
                 <input
                   type="number"
                   value={tempValorJogador}
                   onChange={(e) => setTempValorJogador(e.target.value)}
-                  className="flex-1 rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className="flex-1 rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
               <button
                 onClick={saveValores}
-                className="w-full rounded-md px-3 py-2 text-xs font-semibold text-white"
-                style={{ background: "hsl(142 72% 29%)" }}
+                className="w-full rounded-xl bg-primary px-3 py-2.5 text-xs font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-95"
               >
                 💾 Salvar valores
               </button>
             </div>
           )}
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold" style={{ color: "hsl(142 72% 29%)" }}>R$ {totalArrecadado}</div>
-              <div className="text-[11px] text-muted-foreground">Arrecadado</div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-primary/5 border border-primary/10 p-3 text-center">
+              <div className="text-base font-extrabold text-primary">R$ {totalArrecadado}</div>
+              <div className="text-[10px] text-muted-foreground font-medium mt-0.5">Arrecadado</div>
             </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold text-foreground">R$ {valorCampo}</div>
-              <div className="text-[11px] text-muted-foreground">Campo</div>
+            <div className="rounded-xl bg-muted/50 border p-3 text-center">
+              <div className="text-base font-extrabold text-foreground">R$ {valorCampo}</div>
+              <div className="text-[10px] text-muted-foreground font-medium mt-0.5">Campo</div>
             </div>
-            <div className="rounded-lg bg-muted p-3">
-              <div className="text-lg font-bold" style={{ color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" }}>R$ {saldo}</div>
-              <div className="text-[11px] text-muted-foreground">Saldo</div>
+            <div className="rounded-xl border p-3 text-center" style={{ background: saldo >= 0 ? "hsl(142 72% 29% / 0.05)" : "hsl(0 84% 60% / 0.05)", borderColor: saldo >= 0 ? "hsl(142 72% 29% / 0.15)" : "hsl(0 84% 60% / 0.15)" }}>
+              <div className="text-base font-extrabold" style={{ color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" }}>R$ {saldo}</div>
+              <div className="text-[10px] text-muted-foreground font-medium mt-0.5">Saldo</div>
             </div>
           </div>
         </section>
 
         {/* Jogadores */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold">⚽ Jogadores ({jogadores.length}/18)</h2>
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10">
+                <span className="text-base">⚽</span>
+              </div>
+              <h2 className="text-sm font-bold">Jogadores</h2>
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                {jogadores.length}/18
+              </span>
+            </div>
             {jogadores.length > 0 && (
-              <button onClick={clearAll} className="text-xs text-destructive hover:underline">🗑️ Limpar</button>
+              <button onClick={clearAll} className="rounded-xl border border-destructive/20 px-3 py-1.5 text-xs font-semibold text-destructive transition-all hover:bg-destructive/5 active:scale-95">
+                🗑️ Limpar
+              </button>
             )}
           </div>
+
           {jogadores.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-4">Nenhum jogador na lista.</p>
+            <div className="text-center py-8">
+              <div className="text-3xl mb-2">🏟️</div>
+              <p className="text-sm text-muted-foreground">Nenhum jogador na lista.</p>
+            </div>
           ) : (
             <div className="space-y-2">
-              {jogadores.map((j) => (
+              {sortedJogadores.map((j, index) => (
                 <div
                   key={j.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="animate-fade-in flex items-center justify-between rounded-xl border p-3 transition-all hover:shadow-sm"
                   style={{
                     borderLeftWidth: 4,
                     borderLeftColor: j.status === "pago" ? "hsl(142 72% 29%)" : "hsl(48 96% 53%)",
-                    background: j.status === "pago" ? "hsl(142 72% 29% / 0.06)" : "hsl(0 0% 100%)",
+                    background: j.status === "pago" ? "hsl(142 72% 29% / 0.04)" : "hsl(var(--card))",
                   }}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-medium truncate">{j.nome}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex items-center justify-center h-6 w-6 rounded-full bg-muted text-[10px] font-bold text-muted-foreground shrink-0">
+                      {index + 1}
+                    </span>
+                    <span className="font-semibold text-sm truncate">{j.nome}</span>
                     <span
-                      className="rounded-full px-2 py-0.5 text-xs font-semibold"
+                      className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
                       style={{
-                        background: j.status === "pago" ? "hsl(142 72% 29% / 0.15)" : "hsl(48 96% 53% / 0.2)",
+                        background: j.status === "pago" ? "hsl(142 72% 29% / 0.12)" : "hsl(48 96% 53% / 0.15)",
                         color: j.status === "pago" ? "hsl(142 72% 29%)" : "hsl(30 80% 35%)",
                       }}
                     >
@@ -387,22 +422,21 @@ const Admin = () => {
                     {j.status === "pendente" ? (
                       <button
                         onClick={() => markPaid(j.id)}
-                        className="rounded-md px-2 py-1 text-xs font-medium text-white"
-                        style={{ background: "hsl(142 72% 29%)" }}
+                        className="rounded-lg bg-primary px-2.5 py-1.5 text-[10px] font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-95"
                       >
-                        ✅ Confirmar
+                        ✅ Pago
                       </button>
                     ) : (
                       <button
                         onClick={() => markPending(j.id)}
-                        className="rounded-md px-2 py-1 text-xs font-medium border text-muted-foreground hover:text-foreground transition-colors"
+                        className="rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-all active:scale-95"
                       >
-                        ↩ Reverter
+                        ↩
                       </button>
                     )}
                     <button
                       onClick={() => removePlayer(j.id)}
-                      className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                      className="rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all active:scale-95"
                     >
                       ✕
                     </button>
@@ -413,44 +447,55 @@ const Admin = () => {
           )}
         </section>
 
-        {/* Relatório Financeiro */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-2 text-base font-semibold">📊 Prestação de Contas</h2>
-          <p className="text-xs text-muted-foreground mb-3">Envie o resumo financeiro da pelada pelo WhatsApp.</p>
-          <button
-            onClick={enviarRelatorioWhatsApp}
-            className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: "hsl(142 70% 40%)" }}
-          >
-            📱 Enviar via WhatsApp
-          </button>
-        </section>
+        {/* Relatórios */}
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary/10">
+              <span className="text-base">📊</span>
+            </div>
+            <h2 className="text-sm font-bold">Relatórios</h2>
+          </div>
 
-        {/* Relatório de Jogadores */}
-        <section className="rounded-xl border bg-card p-4 shadow-sm">
-          <h2 className="mb-2 text-base font-semibold">📋 Relatório de Jogadores</h2>
-          <p className="text-xs text-muted-foreground mb-3">Envie a lista de jogadores com status de pagamento.</p>
-          <div className="mb-3 rounded-lg bg-muted p-3 text-xs space-y-1">
-            <div className="flex justify-between">
-              <span>✅ Pagos:</span>
-              <span className="font-semibold" style={{ color: "hsl(142 72% 29%)" }}>{pagos.length}</span>
+          <div className="space-y-3">
+            {/* Financeiro */}
+            <div className="rounded-xl bg-muted/40 border p-4">
+              <h3 className="text-xs font-bold mb-2">💰 Prestação de Contas</h3>
+              <p className="text-[11px] text-muted-foreground mb-3">Resumo financeiro da pelada.</p>
+              <button
+                onClick={enviarRelatorioWhatsApp}
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-95"
+                style={{ background: "hsl(142 70% 40%)" }}
+              >
+                📱 Enviar via WhatsApp
+              </button>
             </div>
-            <div className="flex justify-between">
-              <span>⏳ Pendentes:</span>
-              <span className="font-semibold" style={{ color: "hsl(30 80% 35%)" }}>{pendentes.length}</span>
-            </div>
-            <div className="flex justify-between border-t pt-1 mt-1">
-              <span className="font-medium">👥 Total:</span>
-              <span className="font-bold">{jogadores.length}/18</span>
+
+            {/* Jogadores */}
+            <div className="rounded-xl bg-muted/40 border p-4">
+              <h3 className="text-xs font-bold mb-2">📋 Lista de Jogadores</h3>
+              <div className="mb-3 space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span>✅ Pagos:</span>
+                  <span className="font-bold text-primary">{pagos.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>⏳ Pendentes:</span>
+                  <span className="font-bold" style={{ color: "hsl(30 80% 35%)" }}>{pendentes.length}</span>
+                </div>
+                <div className="flex justify-between border-t pt-1 mt-1">
+                  <span className="font-semibold">👥 Total:</span>
+                  <span className="font-bold">{jogadores.length}/18</span>
+                </div>
+              </div>
+              <button
+                onClick={enviarRelatorioJogadoresWhatsApp}
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-primary-foreground transition-all hover:opacity-90 active:scale-95"
+                style={{ background: "hsl(142 70% 40%)" }}
+              >
+                📱 Enviar lista via WhatsApp
+              </button>
             </div>
           </div>
-          <button
-            onClick={enviarRelatorioJogadoresWhatsApp}
-            className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ background: "hsl(142 70% 40%)" }}
-          >
-            📱 Enviar lista via WhatsApp
-          </button>
         </section>
       </div>
     </div>
