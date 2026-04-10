@@ -4,32 +4,32 @@
 
 @layer base {
   :root {
-    --background: 120 20% 96%;
-    --foreground: 0 0% 7%;
+    --background: 120 20% 97%;
+    --foreground: 150 10% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --card-foreground: 150 10% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    --popover-foreground: 150 10% 10%;
 
     --primary: 142 72% 29%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 140 20% 90%;
-    --secondary-foreground: 0 0% 7%;
+    --secondary: 140 15% 93%;
+    --secondary-foreground: 150 10% 10%;
 
-    --muted: 120 10% 92%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 120 8% 93%;
+    --muted-foreground: 150 5% 45%;
 
     --accent: 48 96% 53%;
-    --accent-foreground: 0 0% 7%;
+    --accent-foreground: 30 80% 15%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 120 10% 85%;
-    --input: 120 10% 85%;
+    --border: 140 8% 88%;
+    --input: 140 8% 88%;
     --ring: 142 72% 29%;
 
     --radius: 0.75rem;
@@ -54,15 +54,58 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Glass effect */
+.glass {
+  @apply bg-card/80 backdrop-blur-xl border border-border/50;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/30;
 }
