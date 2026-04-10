@@ -296,12 +296,29 @@ const Index = () => {
                   Inscrito como <span className="underline decoration-primary/30 underline-offset-2">{meuJogador.nome}</span>
                 </p>
               </div>
-              <button
-                onClick={sairDaLista}
-                className="rounded-xl border border-destructive/20 px-6 py-2.5 text-sm font-semibold text-destructive transition-all duration-200 hover:bg-destructive/5 hover:border-destructive/30 active:scale-95"
-              >
-                🚪 Sair da lista
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    className="rounded-xl border border-destructive/20 px-6 py-2.5 text-sm font-semibold text-destructive transition-all duration-200 hover:bg-destructive/5 hover:border-destructive/30 active:scale-95"
+                  >
+                    ❌ Cancelar inscrição
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancelar inscrição?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja cancelar sua inscrição na pelada? Você poderá se inscrever novamente se houver vagas.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Não, manter</AlertDialogCancel>
+                    <AlertDialogAction onClick={sairDaLista} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Sim, cancelar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           ) : (
             <>
