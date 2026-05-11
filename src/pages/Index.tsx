@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import qrCodePix from "@/assets/qrcode-pix.jpg";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
-const MAX_JOGADORES = 18;
+const MAX_JOGADORES = 21;
 const WHATSAPP_NUMBER = "5598981986302";
 const STORAGE_KEY = "jogador_id";
 
