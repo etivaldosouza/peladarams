@@ -32,6 +32,7 @@ const Index = () => {
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
+  const [horarioPelada, setHorarioPelada] = useState("20h");
   const [valorJogador, setValorJogador] = useState(10);
   const [cadastroAberto, setCadastroAberto] = useState(true);
   const [meuJogador, setMeuJogador] = useState<Jogador | null>(null);
