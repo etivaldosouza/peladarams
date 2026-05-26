@@ -32,6 +32,7 @@ const Index = () => {
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
+  const [horarioPelada, setHorarioPelada] = useState("20h");
   const [valorJogador, setValorJogador] = useState(10);
   const [cadastroAberto, setCadastroAberto] = useState(true);
   const [meuJogador, setMeuJogador] = useState<Jogador | null>(null);
@@ -72,6 +73,7 @@ const Index = () => {
       if (config) {
         for (const c of config) {
           if (c.chave === "data_pelada") setDataPelada(c.valor);
+          if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
           if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
           if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
         }
@@ -98,6 +100,7 @@ const Index = () => {
           if (data) {
             for (const c of data) {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
+              if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
               if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
               if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
             }
@@ -240,7 +243,7 @@ const Index = () => {
           <div className="mt-6 grid grid-cols-3 gap-3 max-w-sm mx-auto">
             {[
               { icon: "📅", value: dataPelada, label: "Data" },
-              { icon: "⏰", value: "20h", label: "Horário" },
+              { icon: "⏰", value: horarioPelada, label: "Horário" },
               { icon: "🎯", value: vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""}` : "Lotado!", label: "Restantes" },
             ].map((item) => (
               <div key={item.label} className="rounded-2xl bg-primary-foreground/10 backdrop-blur-md px-3 py-3.5 border border-primary-foreground/15 transition-all duration-300 hover:bg-primary-foreground/15 hover:scale-[1.03]">

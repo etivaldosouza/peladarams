@@ -20,6 +20,9 @@ const Admin = () => {
   const [password, setPassword] = useState("");
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [dataPelada, setDataPelada] = useState("A definir");
+  const [horarioPelada, setHorarioPelada] = useState("20h");
+  const [editingHorario, setEditingHorario] = useState(false);
+  const [tempHorario, setTempHorario] = useState("20h");
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [valorCampo, setValorCampo] = useState(110);
   const [valorJogador, setValorJogador] = useState(10);
@@ -40,6 +43,7 @@ const Admin = () => {
       if (config) {
         for (const c of config) {
           if (c.chave === "data_pelada") setDataPelada(c.valor);
+          if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
           if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
           if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
           if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
@@ -62,6 +66,7 @@ const Admin = () => {
           if (data) {
             for (const c of data) {
               if (c.chave === "data_pelada") setDataPelada(c.valor);
+              if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
               if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
               if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
               if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
@@ -108,6 +113,15 @@ const Admin = () => {
     }
   };
 
+  const saveHorario = async () => {
+    const novo = tempHorario.trim() || "20h";
+    setHorarioPelada(novo);
+    await supabase.from("pelada_config").upsert({ chave: "horario_pelada", valor: novo }, { onConflict: "chave" });
+    setEditingHorario(false);
+  };
+
+
+
   const saveValores = async () => {
     const vc = Number(tempValorCampo) || 110;
     const vj = Number(tempValorJogador) || 10;
@@ -137,7 +151,7 @@ const Admin = () => {
 
   const gerarRelatorio = () => {
     let texto = `📊 *PRESTAÇÃO DE CONTAS*\n`;
-    texto += `📅 ${dataPelada} | ⏰ 20h\n`;
+    texto += `📅 ${dataPelada} | ⏰ ${horarioPelada}\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
     texto += `💰 *Financeiro:*\n`;
     texto += `  💵 Valor por jogador: R$ ${valorJogador}\n`;
@@ -150,7 +164,7 @@ const Admin = () => {
 
   const gerarRelatorioJogadores = () => {
     let texto = `📋 *RELATÓRIO DE JOGADORES*\n`;
-    texto += `📅 ${dataPelada} | ⏰ 20h\n`;
+    texto += `📅 ${dataPelada} | ⏰ ${horarioPelada}\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
     texto += `👥 Total: ${jogadores.length}/21\n\n`;
     if (pagos.length > 0) {
@@ -279,6 +293,45 @@ const Admin = () => {
             </Popover>
           </div>
         </section>
+
+        {/* Horário da Pelada */}
+        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.045s", animationFillMode: "both" }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
+                <span className="text-lg">⏰</span>
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Horário da Pelada</h2>
+                <p className="text-xs text-muted-foreground">{horarioPelada}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setTempHorario(horarioPelada); setEditingHorario(!editingHorario); }}
+              className="rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:bg-muted active:scale-95"
+            >
+              ✏️ Editar
+            </button>
+          </div>
+          {editingHorario && (
+            <div className="mt-4 flex items-center gap-2 animate-scale-in">
+              <input
+                type="text"
+                value={tempHorario}
+                onChange={(e) => setTempHorario(e.target.value)}
+                placeholder="Ex: 20h, 19:30, 20h00"
+                className="flex-1 rounded-xl border bg-background px-3 py-2.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50"
+              />
+              <button
+                onClick={saveHorario}
+                className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow hover:brightness-110 active:scale-95"
+              >
+                💾 Salvar
+              </button>
+            </div>
+          )}
+        </section>
+
 
         {/* Controle de Cadastro */}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.06s", animationFillMode: "both" }}>
