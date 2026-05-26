@@ -113,6 +113,15 @@ const Admin = () => {
     }
   };
 
+  const saveHorario = async () => {
+    const novo = tempHorario.trim() || "20h";
+    setHorarioPelada(novo);
+    await supabase.from("pelada_config").upsert({ chave: "horario_pelada", valor: novo }, { onConflict: "chave" });
+    setEditingHorario(false);
+  };
+
+
+
   const saveValores = async () => {
     const vc = Number(tempValorCampo) || 110;
     const vj = Number(tempValorJogador) || 10;
