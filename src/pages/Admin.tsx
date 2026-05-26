@@ -294,6 +294,45 @@ const Admin = () => {
           </div>
         </section>
 
+        {/* Horário da Pelada */}
+        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.045s", animationFillMode: "both" }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
+                <span className="text-lg">⏰</span>
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Horário da Pelada</h2>
+                <p className="text-xs text-muted-foreground">{horarioPelada}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setTempHorario(horarioPelada); setEditingHorario(!editingHorario); }}
+              className="rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:bg-muted active:scale-95"
+            >
+              ✏️ Editar
+            </button>
+          </div>
+          {editingHorario && (
+            <div className="mt-4 flex items-center gap-2 animate-scale-in">
+              <input
+                type="text"
+                value={tempHorario}
+                onChange={(e) => setTempHorario(e.target.value)}
+                placeholder="Ex: 20h, 19:30, 20h00"
+                className="flex-1 rounded-xl border bg-background px-3 py-2.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50"
+              />
+              <button
+                onClick={saveHorario}
+                className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow hover:brightness-110 active:scale-95"
+              >
+                💾 Salvar
+              </button>
+            </div>
+          )}
+        </section>
+
+
         {/* Controle de Cadastro */}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.06s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between">
