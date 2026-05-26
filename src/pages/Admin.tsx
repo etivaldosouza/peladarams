@@ -151,7 +151,7 @@ const Admin = () => {
 
   const gerarRelatorio = () => {
     let texto = `📊 *PRESTAÇÃO DE CONTAS*\n`;
-    texto += `📅 ${dataPelada} | ⏰ 20h\n`;
+    texto += `📅 ${dataPelada} | ⏰ ${horarioPelada}\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
     texto += `💰 *Financeiro:*\n`;
     texto += `  💵 Valor por jogador: R$ ${valorJogador}\n`;
@@ -164,7 +164,7 @@ const Admin = () => {
 
   const gerarRelatorioJogadores = () => {
     let texto = `📋 *RELATÓRIO DE JOGADORES*\n`;
-    texto += `📅 ${dataPelada} | ⏰ 20h\n`;
+    texto += `📅 ${dataPelada} | ⏰ ${horarioPelada}\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
     texto += `👥 Total: ${jogadores.length}/21\n\n`;
     if (pagos.length > 0) {
