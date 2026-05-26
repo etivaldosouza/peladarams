@@ -73,6 +73,7 @@ const Index = () => {
       if (config) {
         for (const c of config) {
           if (c.chave === "data_pelada") setDataPelada(c.valor);
+          if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
           if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
           if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
         }
