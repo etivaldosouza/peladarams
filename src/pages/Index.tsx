@@ -159,7 +159,7 @@ const Index = () => {
     const dispositivoId = getDispositivoId();
 
     const { data: existing } = await supabase
-      .from("jogadores")
+      .from("jogadores_public")
       .select("id")
       .eq("dispositivo_id", dispositivoId)
       .maybeSingle();
