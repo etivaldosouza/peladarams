@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_PASSWORD = "admin123";
+const ADMIN_PW_KEY = "admin_pw";
 
 interface Jogador {
   id: string;
