@@ -64,7 +64,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_my_registration: {
+        Args: { p_device_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
