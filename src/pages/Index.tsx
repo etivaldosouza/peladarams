@@ -197,7 +197,7 @@ const Index = () => {
 
     const { error } = await supabase.rpc("delete_my_registration", { p_device_id: dispositivoId });
     if (error) {
-      const { data } = await supabase.from("jogadores").select("*").order("criado_em", { ascending: true });
+      const { data } = await supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true });
       if (data) {
         const typed = data as Jogador[];
         setJogadores(typed);
