@@ -240,15 +240,15 @@ const Admin = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && password === ADMIN_PASSWORD && setIsAuthenticated(true)}
+              onKeyDown={(e) => { if (e.key === "Enter" && password) tryLogin(password); }}
               placeholder="Digite a senha..."
               className="w-full rounded-xl border bg-background px-4 py-3.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
             />
+            {loginError && (
+              <p className="text-xs font-medium text-destructive">{loginError}</p>
+            )}
             <button
-              onClick={() => {
-                if (password === ADMIN_PASSWORD) setIsAuthenticated(true);
-                else setPassword("");
-              }}
+              onClick={() => password && tryLogin(password)}
               className="w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
             >
               Entrar
