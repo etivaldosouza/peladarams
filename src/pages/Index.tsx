@@ -365,7 +365,7 @@ const Index = () => {
                 />
                 <button
                   onClick={addPlayer}
-                  disabled={!nome.trim() || jogadores.length >= MAX_JOGADORES}
+                  disabled={!nome.trim() || !telefone.trim() || jogadores.length >= MAX_JOGADORES}
                   className="w-full rounded-xl px-6 py-3 text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 disabled:opacity-40 disabled:shadow-none active:scale-95"
                 >
                   Entrar na lista
