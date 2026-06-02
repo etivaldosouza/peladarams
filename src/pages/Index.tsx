@@ -178,7 +178,7 @@ const Index = () => {
     setTelefone("");
     setErro("");
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim || null });
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim });
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
       setMeuJogador(null);
