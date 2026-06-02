@@ -62,7 +62,7 @@ const Index = () => {
   useEffect(() => {
     const fetchData = async () => {
       const { data: players } = await supabase
-        .from("jogadores")
+        .from("jogadores_public")
         .select("*")
         .order("criado_em", { ascending: true });
       if (players) {
