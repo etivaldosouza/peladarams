@@ -486,6 +486,20 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      <AlertDialog open={!!mensagem} onOpenChange={(o) => !o && setMensagem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {mensagem?.tipo === "sucesso" ? "✅ Inscrição confirmada" : "⚠️ Atenção"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{mensagem?.texto}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setMensagem(null)}>OK, entendi</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
