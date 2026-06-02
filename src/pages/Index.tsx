@@ -119,7 +119,21 @@ const Index = () => {
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
+    const telefoneTrim = telefone.trim();
+    const telefoneDigits = telefoneTrim.replace(/\D/g, "");
     if (!trimmed) return;
+
+    if (!telefoneTrim) {
+      setErro("Informe seu telefone para confirmar a inscrição.");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
+
+    if (telefoneDigits.length < 10 || telefoneDigits.length > 13) {
+      setErro("Telefone inválido. Use DDD + número (ex: 98 98198-6302).");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
 
     if (meuJogador) {
       setErro("Você já está inscrito nesta pelada!");
