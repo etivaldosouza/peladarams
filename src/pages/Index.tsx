@@ -125,26 +125,22 @@ const Index = () => {
     if (!trimmed) return;
 
     if (!telefoneTrim) {
-      setErro("Informe seu telefone para confirmar a inscrição.");
-      setTimeout(() => setErro(""), 3000);
+      setMensagem({ tipo: "erro", texto: "Informe seu telefone para confirmar a inscrição." });
       return;
     }
 
     if (telefoneDigits.length < 10 || telefoneDigits.length > 13) {
-      setErro("Telefone inválido. Use DDD + número (ex: 98 98198-6302).");
-      setTimeout(() => setErro(""), 3000);
+      setMensagem({ tipo: "erro", texto: "Telefone inválido. Use DDD + número (ex: 98 98198-6302)." });
       return;
     }
 
     if (meuJogador) {
-      setErro("Você já está inscrito nesta pelada!");
-      setTimeout(() => setErro(""), 3000);
+      setMensagem({ tipo: "erro", texto: "Você já está inscrito nesta pelada!" });
       return;
     }
 
     if (jogadores.length >= MAX_JOGADORES) {
-      setErro("Lista cheia! Não há mais vagas.");
-      setTimeout(() => setErro(""), 3000);
+      setMensagem({ tipo: "erro", texto: "Lista cheia! Não há mais vagas." });
       return;
     }
 
@@ -152,8 +148,7 @@ const Index = () => {
       (j) => j.nome.toLowerCase() === trimmed.toLowerCase()
     );
     if (nomeExiste) {
-      setErro("Esse nome já está na lista!");
-      setTimeout(() => setErro(""), 3000);
+      setMensagem({ tipo: "erro", texto: "Esse nome já está na lista!" });
       return;
     }
 
@@ -166,8 +161,7 @@ const Index = () => {
       .maybeSingle();
 
     if (existing) {
-      setErro("Você já está inscrito nesta pelada!");
-      setTimeout(() => setErro(""), 3000);
+      setMensagem({ tipo: "erro", texto: "Você já está inscrito nesta pelada!" });
       return;
     }
 
@@ -189,9 +183,10 @@ const Index = () => {
       const msg = isDup
         ? (isPhone ? "Este telefone já está cadastrado em outra inscrição." : "Você já está inscrito nesta pelada!")
         : "Erro ao cadastrar. Tente novamente.";
-      setErro(msg);
-      setTimeout(() => setErro(""), 3500);
+      setMensagem({ tipo: "erro", texto: msg });
+      return;
     }
+    setMensagem({ tipo: "sucesso", texto: `Inscrição confirmada! Você está na lista como ${trimmed}. Não esqueça de enviar o comprovante do Pix via WhatsApp.` });
   }, [nome, telefone, jogadores, meuJogador, getDispositivoId]);
 
   const sairDaLista = useCallback(async () => {
