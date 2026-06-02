@@ -182,8 +182,14 @@ const Index = () => {
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
       setMeuJogador(null);
-      setErro("Erro ao cadastrar. Tente novamente.");
-      setTimeout(() => setErro(""), 3000);
+      const err = error as { code?: string; message?: string };
+      const isDup = err.code === "23505" || /duplicate|unique/i.test(err.message || "");
+      const isPhone = /telefone/i.test(err.message || "");
+      const msg = isDup
+        ? (isPhone ? "Este telefone já está cadastrado em outra inscrição." : "Você já está inscrito nesta pelada!")
+        : "Erro ao cadastrar. Tente novamente.";
+      setErro(msg);
+      setTimeout(() => setErro(""), 3500);
     }
   }, [nome, telefone, jogadores, meuJogador, getDispositivoId]);
 
