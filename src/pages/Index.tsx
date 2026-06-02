@@ -62,7 +62,7 @@ const Index = () => {
   useEffect(() => {
     const fetchData = async () => {
       const { data: players } = await supabase
-        .from("jogadores")
+        .from("jogadores_public")
         .select("*")
         .order("criado_em", { ascending: true });
       if (players) {
@@ -89,7 +89,7 @@ const Index = () => {
     const channel = supabase
       .channel("public-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
-        supabase.from("jogadores").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
+        supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
           if (data) {
             const typed = data as Jogador[];
             setJogadores(typed);
@@ -159,7 +159,7 @@ const Index = () => {
     const dispositivoId = getDispositivoId();
 
     const { data: existing } = await supabase
-      .from("jogadores")
+      .from("jogadores_public")
       .select("id")
       .eq("dispositivo_id", dispositivoId)
       .maybeSingle();
@@ -197,7 +197,7 @@ const Index = () => {
 
     const { error } = await supabase.rpc("delete_my_registration", { p_device_id: dispositivoId });
     if (error) {
-      const { data } = await supabase.from("jogadores").select("*").order("criado_em", { ascending: true });
+      const { data } = await supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true });
       if (data) {
         const typed = data as Jogador[];
         setJogadores(typed);
