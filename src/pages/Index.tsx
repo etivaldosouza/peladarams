@@ -191,10 +191,11 @@ const Index = () => {
     if (!meuJogador) return;
 
     const jogadorId = meuJogador.id;
+    const dispositivoId = localStorage.getItem(STORAGE_KEY) || "";
     setJogadores((prev) => prev.filter((j) => j.id !== jogadorId));
     setMeuJogador(null);
 
-    const { error } = await supabase.from("jogadores").delete().eq("dispositivo_id", localStorage.getItem(STORAGE_KEY) || "");
+    const { error } = await supabase.rpc("delete_my_registration", { p_device_id: dispositivoId });
     if (error) {
       const { data } = await supabase.from("jogadores").select("*").order("criado_em", { ascending: true });
       if (data) {
