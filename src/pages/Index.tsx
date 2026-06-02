@@ -358,7 +358,7 @@ const Index = () => {
                   onKeyDown={(e) => e.key === "Enter" && addPlayer()}
                   type="tel"
                   inputMode="tel"
-                  placeholder="Telefone (opcional) – ex: 98 98198-6302"
+                  placeholder="Telefone (obrigatório) – ex: 98 98198-6302"
                   className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
                   maxLength={20}
                   disabled={jogadores.length >= MAX_JOGADORES}
