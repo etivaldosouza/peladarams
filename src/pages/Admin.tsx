@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
-const ADMIN_PASSWORD = "admin123";
+const ADMIN_PW_KEY = "admin_pw";
 
 interface Jogador {
   id: string;
@@ -19,6 +19,8 @@ interface Jogador {
 const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [adminPw, setAdminPw] = useState<string>(() => sessionStorage.getItem(ADMIN_PW_KEY) || "");
+  const [loginError, setLoginError] = useState("");
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [dataPelada, setDataPelada] = useState("A definir");
   const [horarioPelada, setHorarioPelada] = useState("20h");
@@ -32,13 +34,28 @@ const Admin = () => {
   const [tempValorJogador, setTempValorJogador] = useState("10");
   const [cadastroAberto, setCadastroAberto] = useState(true);
 
+  const callAdmin = async (body: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("admin-api", {
+      body,
+      headers: { "x-admin-password": adminPw },
+    });
+    if (error) throw error;
+    return data as { error?: string } & Record<string, unknown>;
+  };
+
+  const refreshJogadores = async () => {
+    try {
+      const res = await callAdmin({ action: "list_jogadores" });
+      if (res?.jogadores) setJogadores(res.jogadores as Jogador[]);
+    } catch (e) {
+      console.error("refreshJogadores", e);
+    }
+  };
+
   useEffect(() => {
+    if (!isAuthenticated) return;
     const fetchData = async () => {
-      const { data: players } = await supabase
-        .from("jogadores")
-        .select("*")
-        .order("criado_em", { ascending: true });
-      if (players) setJogadores(players as Jogador[]);
+      await refreshJogadores();
 
       const { data: config } = await supabase.from("pelada_config").select("*");
       if (config) {
@@ -52,15 +69,15 @@ const Admin = () => {
       }
     };
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     const channel = supabase
       .channel("admin-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
-        supabase.from("jogadores").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
-          if (data) setJogadores(data as Jogador[]);
-        });
+        refreshJogadores();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
         supabase.from("pelada_config").select("*").then(({ data }) => {
@@ -78,29 +95,47 @@ const Admin = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  const tryLogin = async (pw: string) => {
+    setLoginError("");
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-api", {
+        body: { action: "login" },
+        headers: { "x-admin-password": pw },
+      });
+      if (error || (data as { error?: string })?.error) {
+        setLoginError("Senha incorreta.");
+        return;
+      }
+      setAdminPw(pw);
+      sessionStorage.setItem(ADMIN_PW_KEY, pw);
+      setIsAuthenticated(true);
+    } catch {
+      setLoginError("Erro ao autenticar. Tente novamente.");
+    }
+  };
 
   const markPaid = async (id: string) => {
     setJogadores((prev) => prev.map((j) => j.id === id ? { ...j, status: "pago" as const } : j));
-    await supabase.from("jogadores").update({ status: "pago" }).eq("id", id);
+    await callAdmin({ action: "set_status", id, status: "pago" });
   };
 
   const markPending = async (id: string) => {
     setJogadores((prev) => prev.map((j) => j.id === id ? { ...j, status: "pendente" as const } : j));
-    await supabase.from("jogadores").update({ status: "pendente" }).eq("id", id);
+    await callAdmin({ action: "set_status", id, status: "pendente" });
   };
 
   const removePlayer = async (id: string) => {
     setJogadores((prev) => prev.filter((j) => j.id !== id));
-    await supabase.from("jogadores").delete().eq("id", id);
+    await callAdmin({ action: "remove_player", id });
   };
 
   const clearAll = async () => {
     if (window.confirm("Tem certeza que deseja limpar toda a lista?")) {
-      const ids = jogadores.map((j) => j.id);
-      if (ids.length > 0) {
-        await supabase.from("jogadores").delete().in("id", ids);
-      }
+      await callAdmin({ action: "clear_all" });
+      setJogadores([]);
     }
   };
 
@@ -109,7 +144,7 @@ const Admin = () => {
       const formatted = format(date, "EEEE, dd/MM", { locale: ptBR });
       const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
       setDataPelada(capitalized);
-      await supabase.from("pelada_config").update({ valor: capitalized }).eq("chave", "data_pelada");
+      await callAdmin({ action: "set_config", chave: "data_pelada", valor: capitalized });
       setCalendarOpen(false);
     }
   };
@@ -117,17 +152,15 @@ const Admin = () => {
   const saveHorario = async () => {
     const novo = tempHorario.trim() || "20h";
     setHorarioPelada(novo);
-    await supabase.from("pelada_config").upsert({ chave: "horario_pelada", valor: novo }, { onConflict: "chave" });
+    await callAdmin({ action: "set_config", chave: "horario_pelada", valor: novo });
     setEditingHorario(false);
   };
-
-
 
   const saveValores = async () => {
     const vc = Number(tempValorCampo) || 110;
     const vj = Number(tempValorJogador) || 10;
-    await supabase.from("pelada_config").update({ valor: String(vc) }).eq("chave", "valor_campo");
-    await supabase.from("pelada_config").update({ valor: String(vj) }).eq("chave", "valor_jogador");
+    await callAdmin({ action: "set_config", chave: "valor_campo", valor: String(vc) });
+    await callAdmin({ action: "set_config", chave: "valor_jogador", valor: String(vj) });
     setValorCampo(vc);
     setValorJogador(vj);
     setEditingValores(false);
@@ -136,8 +169,9 @@ const Admin = () => {
   const toggleCadastro = async () => {
     const newValue = !cadastroAberto;
     setCadastroAberto(newValue);
-    await supabase.from("pelada_config").update({ valor: String(newValue) }).eq("chave", "cadastro_aberto");
+    await callAdmin({ action: "set_config", chave: "cadastro_aberto", valor: String(newValue) });
   };
+
 
   const WHATSAPP_NUMBER = "5598981986302";
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
@@ -206,15 +240,15 @@ const Admin = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && password === ADMIN_PASSWORD && setIsAuthenticated(true)}
+              onKeyDown={(e) => { if (e.key === "Enter" && password) tryLogin(password); }}
               placeholder="Digite a senha..."
               className="w-full rounded-xl border bg-background px-4 py-3.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
             />
+            {loginError && (
+              <p className="text-xs font-medium text-destructive">{loginError}</p>
+            )}
             <button
-              onClick={() => {
-                if (password === ADMIN_PASSWORD) setIsAuthenticated(true);
-                else setPassword("");
-              }}
+              onClick={() => password && tryLogin(password)}
               className="w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
             >
               Entrar
