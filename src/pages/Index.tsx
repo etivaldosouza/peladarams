@@ -33,6 +33,7 @@ const Index = () => {
   const [telefone, setTelefone] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
+  const [mensagem, setMensagem] = useState<{ tipo: "sucesso" | "erro"; texto: string } | null>(null);
   const [dataPelada, setDataPelada] = useState("A definir");
   const [horarioPelada, setHorarioPelada] = useState("20h");
   const [valorJogador, setValorJogador] = useState(10);
