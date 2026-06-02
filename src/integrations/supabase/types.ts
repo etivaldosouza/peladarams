@@ -61,7 +61,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      jogadores_public: {
+        Row: {
+          criado_em: string | null
+          dispositivo_id: string | null
+          id: string | null
+          nome: string | null
+          status: string | null
+        }
+        Insert: {
+          criado_em?: string | null
+          dispositivo_id?: string | null
+          id?: string | null
+          nome?: string | null
+          status?: string | null
+        }
+        Update: {
+          criado_em?: string | null
+          dispositivo_id?: string | null
+          id?: string | null
+          nome?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_my_registration: {
