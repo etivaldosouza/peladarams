@@ -171,8 +171,7 @@ const Index = () => {
     }
 
     const tempId = crypto.randomUUID();
-    const telefoneTrim = telefone.trim();
-    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim || null };
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim };
     setJogadores((prev) => [...prev, novoJogador]);
     setMeuJogador(novoJogador);
     setNome("");
