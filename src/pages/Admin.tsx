@@ -13,6 +13,7 @@ interface Jogador {
   nome: string;
   status: "pendente" | "pago";
   criado_em: string;
+  telefone?: string | null;
 }
 
 const Admin = () => {
