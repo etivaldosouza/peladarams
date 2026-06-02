@@ -24,11 +24,13 @@ interface Jogador {
   status: "pendente" | "pago";
   criado_em: string;
   dispositivo_id?: string | null;
+  telefone?: string | null;
 }
 
 const Index = () => {
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
