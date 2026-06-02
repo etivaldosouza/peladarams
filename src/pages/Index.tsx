@@ -157,20 +157,22 @@ const Index = () => {
     }
 
     const tempId = crypto.randomUUID();
-    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId };
+    const telefoneTrim = telefone.trim();
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim || null };
     setJogadores((prev) => [...prev, novoJogador]);
     setMeuJogador(novoJogador);
     setNome("");
+    setTelefone("");
     setErro("");
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId });
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim || null });
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
       setMeuJogador(null);
       setErro("Erro ao cadastrar. Tente novamente.");
       setTimeout(() => setErro(""), 3000);
     }
-  }, [nome, jogadores, meuJogador, getDispositivoId]);
+  }, [nome, telefone, jogadores, meuJogador, getDispositivoId]);
 
   const sairDaLista = useCallback(async () => {
     if (!meuJogador) return;
