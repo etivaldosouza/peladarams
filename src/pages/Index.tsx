@@ -24,11 +24,13 @@ interface Jogador {
   status: "pendente" | "pago";
   criado_em: string;
   dispositivo_id?: string | null;
+  telefone?: string | null;
 }
 
 const Index = () => {
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState("");
   const [dataPelada, setDataPelada] = useState("A definir");
@@ -155,20 +157,22 @@ const Index = () => {
     }
 
     const tempId = crypto.randomUUID();
-    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId };
+    const telefoneTrim = telefone.trim();
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim || null };
     setJogadores((prev) => [...prev, novoJogador]);
     setMeuJogador(novoJogador);
     setNome("");
+    setTelefone("");
     setErro("");
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId });
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim || null });
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
       setMeuJogador(null);
       setErro("Erro ao cadastrar. Tente novamente.");
       setTimeout(() => setErro(""), 3000);
     }
-  }, [nome, jogadores, meuJogador, getDispositivoId]);
+  }, [nome, telefone, jogadores, meuJogador, getDispositivoId]);
 
   const sairDaLista = useCallback(async () => {
     if (!meuJogador) return;
@@ -325,22 +329,33 @@ const Index = () => {
             </div>
           ) : (
             <>
-              <div className="flex gap-2.5">
+              <div className="space-y-2.5">
                 <input
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && addPlayer()}
                   placeholder="Digite seu nome..."
-                  className="flex-1 rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
+                  className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
                   maxLength={30}
+                  disabled={jogadores.length >= MAX_JOGADORES}
+                />
+                <input
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addPlayer()}
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="Telefone (opcional) – ex: 98 98198-6302"
+                  className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
+                  maxLength={20}
                   disabled={jogadores.length >= MAX_JOGADORES}
                 />
                 <button
                   onClick={addPlayer}
                   disabled={!nome.trim() || jogadores.length >= MAX_JOGADORES}
-                  className="shrink-0 rounded-xl px-6 py-3 text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 disabled:opacity-40 disabled:shadow-none active:scale-95"
+                  className="w-full rounded-xl px-6 py-3 text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 disabled:opacity-40 disabled:shadow-none active:scale-95"
                 >
-                  Entrar
+                  Entrar na lista
                 </button>
               </div>
               {erro && (

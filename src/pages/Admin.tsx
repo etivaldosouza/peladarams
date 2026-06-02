@@ -13,6 +13,7 @@ interface Jogador {
   nome: string;
   status: "pendente" | "pago";
   criado_em: string;
+  telefone?: string | null;
 }
 
 const Admin = () => {
@@ -461,20 +462,36 @@ const Admin = () => {
                     background: j.status === "pago" ? "hsl(142 72% 29% / 0.03)" : "hsl(var(--card))",
                   }}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <span className="flex items-center justify-center h-6 w-6 rounded-full bg-muted text-[10px] font-bold text-muted-foreground shrink-0 tabular-nums">
                       {index + 1}
                     </span>
-                    <span className="font-semibold text-sm truncate text-foreground">{j.nome}</span>
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
-                      style={{
-                        background: j.status === "pago" ? "hsl(142 72% 29% / 0.1)" : "hsl(48 96% 53% / 0.12)",
-                        color: j.status === "pago" ? "hsl(142 72% 29%)" : "hsl(30 80% 35%)",
-                      }}
-                    >
-                      {j.status === "pago" ? "✅ Pago" : "⏳ Pendente"}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm truncate text-foreground">{j.nome}</span>
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-bold shrink-0"
+                          style={{
+                            background: j.status === "pago" ? "hsl(142 72% 29% / 0.1)" : "hsl(48 96% 53% / 0.12)",
+                            color: j.status === "pago" ? "hsl(142 72% 29%)" : "hsl(30 80% 35%)",
+                          }}
+                        >
+                          {j.status === "pago" ? "✅ Pago" : "⏳ Pendente"}
+                        </span>
+                      </div>
+                      {j.telefone ? (
+                        <a
+                          href={`https://wa.me/55${j.telefone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                        >
+                          📱 {j.telefone}
+                        </a>
+                      ) : (
+                        <span className="mt-0.5 inline-block text-[11px] text-muted-foreground/60">— sem telefone</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     {j.status === "pendente" ? (
