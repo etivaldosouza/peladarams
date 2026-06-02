@@ -89,7 +89,7 @@ const Index = () => {
     const channel = supabase
       .channel("public-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
-        supabase.from("jogadores").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
+        supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
           if (data) {
             const typed = data as Jogador[];
             setJogadores(typed);
