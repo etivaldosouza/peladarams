@@ -186,7 +186,7 @@ const Index = () => {
       setMensagem({ tipo: "erro", texto: msg });
       return;
     }
-    setMensagem({ tipo: "sucesso", texto: `Inscrição confirmada! Você está na lista como ${trimmed}. Não esqueça de enviar o comprovante do Pix via WhatsApp.` });
+    setMensagem({ tipo: "sucesso", texto: `Você está na lista como ${trimmed}! Sua inscrição será confirmada apenas após o pagamento. Não esqueça de enviar o comprovante do Pix via WhatsApp.` });
   }, [nome, telefone, jogadores, meuJogador, getDispositivoId]);
 
   const sairDaLista = useCallback(async () => {
