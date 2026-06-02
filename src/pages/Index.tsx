@@ -119,7 +119,21 @@ const Index = () => {
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
+    const telefoneTrim = telefone.trim();
+    const telefoneDigits = telefoneTrim.replace(/\D/g, "");
     if (!trimmed) return;
+
+    if (!telefoneTrim) {
+      setErro("Informe seu telefone para confirmar a inscrição.");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
+
+    if (telefoneDigits.length < 10 || telefoneDigits.length > 13) {
+      setErro("Telefone inválido. Use DDD + número (ex: 98 98198-6302).");
+      setTimeout(() => setErro(""), 3000);
+      return;
+    }
 
     if (meuJogador) {
       setErro("Você já está inscrito nesta pelada!");
@@ -157,15 +171,14 @@ const Index = () => {
     }
 
     const tempId = crypto.randomUUID();
-    const telefoneTrim = telefone.trim();
-    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim || null };
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim };
     setJogadores((prev) => [...prev, novoJogador]);
     setMeuJogador(novoJogador);
     setNome("");
     setTelefone("");
     setErro("");
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim || null });
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim });
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
       setMeuJogador(null);
@@ -345,14 +358,14 @@ const Index = () => {
                   onKeyDown={(e) => e.key === "Enter" && addPlayer()}
                   type="tel"
                   inputMode="tel"
-                  placeholder="Telefone (opcional) – ex: 98 98198-6302"
+                  placeholder="Telefone (obrigatório) – ex: 98 98198-6302"
                   className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
                   maxLength={20}
                   disabled={jogadores.length >= MAX_JOGADORES}
                 />
                 <button
                   onClick={addPlayer}
-                  disabled={!nome.trim() || jogadores.length >= MAX_JOGADORES}
+                  disabled={!nome.trim() || !telefone.trim() || jogadores.length >= MAX_JOGADORES}
                   className="w-full rounded-xl px-6 py-3 text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 disabled:opacity-40 disabled:shadow-none active:scale-95"
                 >
                   Entrar na lista
