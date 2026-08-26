@@ -120,8 +120,10 @@ Deno.serve(async (req) => {
 
       case "set_config": {
         if (!CONFIG_KEYS.has(body.chave)) return bad(400, "Invalid config key");
-        if (typeof body.valor !== "string" || body.valor.length > 200)
+        const maxLen = MAX_VALUE_LENGTH[body.chave] ?? 200;
+        if (typeof body.valor !== "string" || body.valor.length > maxLen)
           return bad(400, "Invalid value");
+
         const { error } = await admin
           .from("pelada_config")
           .upsert({ chave: body.chave, valor: body.valor }, { onConflict: "chave" });
