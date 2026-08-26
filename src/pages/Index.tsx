@@ -65,6 +65,19 @@ const Index = () => {
     }
   }, []);
 
+  const aplicarConfig = useCallback((config: { chave: string; valor: string }[]) => {
+    for (const c of config) {
+      if (c.chave === "data_pelada") setDataPelada(c.valor);
+      if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
+      if (c.chave === "local_pelada") setLocalPelada(c.valor);
+      if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+      if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
+      if (c.chave === "max_jogadores") setMaxJogadores(Number(c.valor) || 21);
+      if (c.chave === "sorteio_atual") setSorteio(parseSorteio(c.valor));
+    }
+  }, []);
+
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: players } = await supabase
