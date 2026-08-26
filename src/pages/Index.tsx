@@ -96,7 +96,7 @@ const Index = () => {
       setCarregando(false);
     };
     fetchData();
-  }, [verificarInscricao]);
+  }, [verificarInscricao, aplicarConfig]);
 
   useEffect(() => {
     const channel = supabase
@@ -119,10 +119,10 @@ const Index = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [verificarInscricao]);
+  }, [verificarInscricao, aplicarConfig]);
 
-  const vagasRestantes = MAX_JOGADORES - jogadores.length;
-  const porcentagemOcupada = (jogadores.length / MAX_JOGADORES) * 100;
+  const vagasRestantes = maxJogadores - jogadores.length;
+  const porcentagemOcupada = (jogadores.length / maxJogadores) * 100;
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
@@ -145,7 +145,7 @@ const Index = () => {
       return;
     }
 
-    if (jogadores.length >= MAX_JOGADORES) {
+    if (jogadores.length >= maxJogadores) {
       setMensagem({ tipo: "erro", texto: "Lista cheia! Não há mais vagas." });
       return;
     }
@@ -293,7 +293,7 @@ const Index = () => {
                 }}
               />
             </div>
-            <p className="text-[11px] opacity-50 mt-1.5 font-medium">{jogadores.length}/{MAX_JOGADORES} confirmados</p>
+            <p className="text-[11px] opacity-50 mt-1.5 font-medium">{jogadores.length}/{maxJogadores} confirmados</p>
           </div>
         </div>
       </header>
@@ -359,7 +359,7 @@ const Index = () => {
                   placeholder="Digite seu nome..."
                   className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
                   maxLength={30}
-                  disabled={jogadores.length >= MAX_JOGADORES}
+                  disabled={jogadores.length >= maxJogadores}
                 />
                 <input
                   value={telefone}
@@ -370,11 +370,11 @@ const Index = () => {
                   placeholder="Telefone (obrigatório) – ex: 98 98198-6302"
                   className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
                   maxLength={20}
-                  disabled={jogadores.length >= MAX_JOGADORES}
+                  disabled={jogadores.length >= maxJogadores}
                 />
                 <button
                   onClick={addPlayer}
-                  disabled={!nome.trim() || !telefone.trim() || jogadores.length >= MAX_JOGADORES}
+                  disabled={!nome.trim() || !telefone.trim() || jogadores.length >= maxJogadores}
                   className="w-full rounded-xl px-6 py-3 text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 disabled:opacity-40 disabled:shadow-none active:scale-95"
                 >
                   Entrar na lista
@@ -438,7 +438,7 @@ const Index = () => {
               <h2 className="text-base font-bold text-foreground">Jogadores</h2>
             </div>
             <span className="rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary tabular-nums">
-              {jogadores.length}/{MAX_JOGADORES}
+              {jogadores.length}/{maxJogadores}
             </span>
           </div>
 
