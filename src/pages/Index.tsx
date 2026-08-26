@@ -11,12 +11,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSorteio, type Sorteio } from "@/lib/sorteio";
 import qrCodePix from "@/assets/qrcode-pix.jpg";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
-const MAX_JOGADORES = 21;
 const WHATSAPP_NUMBER = "5598981986302";
 const STORAGE_KEY = "jogador_id";
+
 
 interface Jogador {
   id: string;
@@ -36,10 +37,14 @@ const Index = () => {
   const [mensagem, setMensagem] = useState<{ tipo: "sucesso" | "erro"; texto: string } | null>(null);
   const [dataPelada, setDataPelada] = useState("A definir");
   const [horarioPelada, setHorarioPelada] = useState("20h");
+  const [localPelada, setLocalPelada] = useState("");
+  const [maxJogadores, setMaxJogadores] = useState(21);
+  const [sorteio, setSorteio] = useState<Sorteio | null>(null);
   const [valorJogador, setValorJogador] = useState(10);
   const [cadastroAberto, setCadastroAberto] = useState(true);
   const [meuJogador, setMeuJogador] = useState<Jogador | null>(null);
   const [carregando, setCarregando] = useState(true);
+
 
   const getDispositivoId = useCallback(() => {
     let id = localStorage.getItem(STORAGE_KEY);
@@ -60,6 +65,19 @@ const Index = () => {
     }
   }, []);
 
+  const aplicarConfig = useCallback((config: { chave: string; valor: string }[]) => {
+    for (const c of config) {
+      if (c.chave === "data_pelada") setDataPelada(c.valor);
+      if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
+      if (c.chave === "local_pelada") setLocalPelada(c.valor);
+      if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
+      if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
+      if (c.chave === "max_jogadores") setMaxJogadores(Number(c.valor) || 21);
+      if (c.chave === "sorteio_atual") setSorteio(parseSorteio(c.valor));
+    }
+  }, []);
+
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: players } = await supabase
@@ -73,18 +91,12 @@ const Index = () => {
       }
 
       const { data: config } = await supabase.from("pelada_config").select("*");
-      if (config) {
-        for (const c of config) {
-          if (c.chave === "data_pelada") setDataPelada(c.valor);
-          if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
-          if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
-          if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
-        }
-      }
+      if (config) aplicarConfig(config);
+
       setCarregando(false);
     };
     fetchData();
-  }, [verificarInscricao]);
+  }, [verificarInscricao, aplicarConfig]);
 
   useEffect(() => {
     const channel = supabase
@@ -100,23 +112,17 @@ const Index = () => {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
         supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) {
-            for (const c of data) {
-              if (c.chave === "data_pelada") setDataPelada(c.valor);
-              if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
-              if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
-              if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
-            }
-          }
+          if (data) aplicarConfig(data);
         });
       })
+
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [verificarInscricao]);
+  }, [verificarInscricao, aplicarConfig]);
 
-  const vagasRestantes = MAX_JOGADORES - jogadores.length;
-  const porcentagemOcupada = (jogadores.length / MAX_JOGADORES) * 100;
+  const vagasRestantes = maxJogadores - jogadores.length;
+  const porcentagemOcupada = (jogadores.length / maxJogadores) * 100;
 
   const addPlayer = useCallback(async () => {
     const trimmed = nome.trim();
@@ -139,7 +145,7 @@ const Index = () => {
       return;
     }
 
-    if (jogadores.length >= MAX_JOGADORES) {
+    if (jogadores.length >= maxJogadores) {
       setMensagem({ tipo: "erro", texto: "Lista cheia! Não há mais vagas." });
       return;
     }
@@ -187,7 +193,7 @@ const Index = () => {
       return;
     }
     setMensagem({ tipo: "sucesso", texto: `Você está na lista como ${trimmed}! Sua inscrição será confirmada apenas após o pagamento. Não esqueça de enviar o comprovante do Pix via WhatsApp.` });
-  }, [nome, telefone, jogadores, meuJogador, getDispositivoId]);
+  }, [nome, telefone, jogadores, meuJogador, maxJogadores, getDispositivoId]);
 
   const sairDaLista = useCallback(async () => {
     if (!meuJogador) return;
@@ -274,6 +280,13 @@ const Index = () => {
             ))}
           </div>
 
+          {localPelada && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/15 px-4 py-1.5 text-xs font-semibold backdrop-blur-md">
+              📍 {localPelada}
+            </div>
+          )}
+
+
           {/* Progress bar */}
           <div className="mt-5 max-w-sm mx-auto">
             <div className="h-2 rounded-full bg-primary-foreground/15 overflow-hidden shadow-inner">
@@ -287,7 +300,7 @@ const Index = () => {
                 }}
               />
             </div>
-            <p className="text-[11px] opacity-50 mt-1.5 font-medium">{jogadores.length}/{MAX_JOGADORES} confirmados</p>
+            <p className="text-[11px] opacity-50 mt-1.5 font-medium">{jogadores.length}/{maxJogadores} confirmados</p>
           </div>
         </div>
       </header>
@@ -353,7 +366,7 @@ const Index = () => {
                   placeholder="Digite seu nome..."
                   className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
                   maxLength={30}
-                  disabled={jogadores.length >= MAX_JOGADORES}
+                  disabled={jogadores.length >= maxJogadores}
                 />
                 <input
                   value={telefone}
@@ -364,11 +377,11 @@ const Index = () => {
                   placeholder="Telefone (obrigatório) – ex: 98 98198-6302"
                   className="w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
                   maxLength={20}
-                  disabled={jogadores.length >= MAX_JOGADORES}
+                  disabled={jogadores.length >= maxJogadores}
                 />
                 <button
                   onClick={addPlayer}
-                  disabled={!nome.trim() || !telefone.trim() || jogadores.length >= MAX_JOGADORES}
+                  disabled={!nome.trim() || !telefone.trim() || jogadores.length >= maxJogadores}
                   className="w-full rounded-xl px-6 py-3 text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 disabled:opacity-40 disabled:shadow-none active:scale-95"
                 >
                   Entrar na lista
@@ -422,7 +435,60 @@ const Index = () => {
           </a>
         </section>
 
+        {/* Times da Pelada */}
+        {sorteio && (
+          <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
+                <span className="text-lg">⚽</span>
+              </div>
+              <h2 className="text-base font-bold text-foreground">Times da Pelada</h2>
+            </div>
+
+            <div className="space-y-3">
+              {sorteio.times.map((t) => (
+                <div key={t.nome} className="rounded-xl border bg-muted/20 p-4">
+                  <h3 className="text-sm font-extrabold text-foreground mb-2.5">
+                    {t.emoji} {t.nome}
+                  </h3>
+                  <ul className="space-y-1.5">
+                    {t.goleiro && (
+                      <li className="flex items-center gap-2 text-sm font-semibold text-primary">
+                        <span>🧤</span>
+                        <span className="truncate">{t.goleiro}</span>
+                      </li>
+                    )}
+                    {t.jogadores.map((j) => (
+                      <li key={j} className="flex items-center gap-2 text-sm text-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                        <span className="truncate">{j}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="rounded-xl border border-accent/30 bg-accent/10 p-4 text-center">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-accent-foreground/70">🔥 Primeiro jogo</p>
+                <p className="mt-1 text-sm font-extrabold text-foreground">
+                  {sorteio.times[sorteio.primeiroJogo[0]].nome} × {sorteio.times[sorteio.primeiroJogo[1]].nome}
+                </p>
+              </div>
+              {sorteio.aguarda.length > 0 && (
+                <div className="rounded-xl border bg-muted/30 p-3 text-center">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    ⏳ Aguarda: {sorteio.aguarda.map((i) => sorteio.times[i].nome).join(", ")}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Jogadores */}
+
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
@@ -432,7 +498,7 @@ const Index = () => {
               <h2 className="text-base font-bold text-foreground">Jogadores</h2>
             </div>
             <span className="rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary tabular-nums">
-              {jogadores.length}/{MAX_JOGADORES}
+              {jogadores.length}/{maxJogadores}
             </span>
           </div>
 

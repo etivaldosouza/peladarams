@@ -16,10 +16,21 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 const CONFIG_KEYS = new Set([
   "data_pelada",
   "horario_pelada",
+  "local_pelada",
   "valor_campo",
   "valor_jogador",
   "cadastro_aberto",
+  "max_jogadores",
+  "qtd_times",
+  "goleiros_fixos",
+  "sorteio_atual",
 ]);
+
+const MAX_VALUE_LENGTH: Record<string, number> = {
+  sorteio_atual: 20000,
+  goleiros_fixos: 1000,
+};
+
 
 type Action =
   | { action: "login" }
@@ -109,8 +120,10 @@ Deno.serve(async (req) => {
 
       case "set_config": {
         if (!CONFIG_KEYS.has(body.chave)) return bad(400, "Invalid config key");
-        if (typeof body.valor !== "string" || body.valor.length > 200)
+        const maxLen = MAX_VALUE_LENGTH[body.chave] ?? 200;
+        if (typeof body.valor !== "string" || body.valor.length > maxLen)
           return bad(400, "Invalid value");
+
         const { error } = await admin
           .from("pelada_config")
           .upsert({ chave: body.chave, valor: body.valor }, { onConflict: "chave" });
