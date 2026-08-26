@@ -16,10 +16,21 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 const CONFIG_KEYS = new Set([
   "data_pelada",
   "horario_pelada",
+  "local_pelada",
   "valor_campo",
   "valor_jogador",
   "cadastro_aberto",
+  "max_jogadores",
+  "qtd_times",
+  "goleiros_fixos",
+  "sorteio_atual",
 ]);
+
+const MAX_VALUE_LENGTH: Record<string, number> = {
+  sorteio_atual: 20000,
+  goleiros_fixos: 1000,
+};
+
 
 type Action =
   | { action: "login" }
