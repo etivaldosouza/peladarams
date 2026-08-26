@@ -11,12 +11,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSorteio, type Sorteio } from "@/lib/sorteio";
 import qrCodePix from "@/assets/qrcode-pix.jpg";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
-const MAX_JOGADORES = 21;
 const WHATSAPP_NUMBER = "5598981986302";
 const STORAGE_KEY = "jogador_id";
+
 
 interface Jogador {
   id: string;
@@ -36,10 +37,14 @@ const Index = () => {
   const [mensagem, setMensagem] = useState<{ tipo: "sucesso" | "erro"; texto: string } | null>(null);
   const [dataPelada, setDataPelada] = useState("A definir");
   const [horarioPelada, setHorarioPelada] = useState("20h");
+  const [localPelada, setLocalPelada] = useState("");
+  const [maxJogadores, setMaxJogadores] = useState(21);
+  const [sorteio, setSorteio] = useState<Sorteio | null>(null);
   const [valorJogador, setValorJogador] = useState(10);
   const [cadastroAberto, setCadastroAberto] = useState(true);
   const [meuJogador, setMeuJogador] = useState<Jogador | null>(null);
   const [carregando, setCarregando] = useState(true);
+
 
   const getDispositivoId = useCallback(() => {
     let id = localStorage.getItem(STORAGE_KEY);
