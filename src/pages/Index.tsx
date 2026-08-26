@@ -435,7 +435,60 @@ const Index = () => {
           </a>
         </section>
 
+        {/* Times da Pelada */}
+        {sorteio && (
+          <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
+                <span className="text-lg">⚽</span>
+              </div>
+              <h2 className="text-base font-bold text-foreground">Times da Pelada</h2>
+            </div>
+
+            <div className="space-y-3">
+              {sorteio.times.map((t) => (
+                <div key={t.nome} className="rounded-xl border bg-muted/20 p-4">
+                  <h3 className="text-sm font-extrabold text-foreground mb-2.5">
+                    {t.emoji} {t.nome}
+                  </h3>
+                  <ul className="space-y-1.5">
+                    {t.goleiro && (
+                      <li className="flex items-center gap-2 text-sm font-semibold text-primary">
+                        <span>🧤</span>
+                        <span className="truncate">{t.goleiro}</span>
+                      </li>
+                    )}
+                    {t.jogadores.map((j) => (
+                      <li key={j} className="flex items-center gap-2 text-sm text-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                        <span className="truncate">{j}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <div className="rounded-xl border border-accent/30 bg-accent/10 p-4 text-center">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-accent-foreground/70">🔥 Primeiro jogo</p>
+                <p className="mt-1 text-sm font-extrabold text-foreground">
+                  {sorteio.times[sorteio.primeiroJogo[0]].nome} × {sorteio.times[sorteio.primeiroJogo[1]].nome}
+                </p>
+              </div>
+              {sorteio.aguarda.length > 0 && (
+                <div className="rounded-xl border bg-muted/30 p-3 text-center">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    ⏳ Aguarda: {sorteio.aguarda.map((i) => sorteio.times[i].nome).join(", ")}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Jogadores */}
+
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
