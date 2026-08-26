@@ -105,16 +105,10 @@ const Index = () => {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
         supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) {
-            for (const c of data) {
-              if (c.chave === "data_pelada") setDataPelada(c.valor);
-              if (c.chave === "horario_pelada") setHorarioPelada(c.valor);
-              if (c.chave === "valor_jogador") setValorJogador(Number(c.valor));
-              if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
-            }
-          }
+          if (data) aplicarConfig(data);
         });
       })
+
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
