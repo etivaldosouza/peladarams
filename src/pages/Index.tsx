@@ -280,6 +280,13 @@ const Index = () => {
             ))}
           </div>
 
+          {localPelada && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/15 px-4 py-1.5 text-xs font-semibold backdrop-blur-md">
+              📍 {localPelada}
+            </div>
+          )}
+
+
           {/* Progress bar */}
           <div className="mt-5 max-w-sm mx-auto">
             <div className="h-2 rounded-full bg-primary-foreground/15 overflow-hidden shadow-inner">
