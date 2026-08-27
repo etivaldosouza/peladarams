@@ -269,7 +269,7 @@ const Admin = () => {
     let texto = `📋 *RELATÓRIO DE JOGADORES*\n`;
     texto += `📅 ${dataPelada} | ⏰ ${horarioPelada}\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
-    texto += `👥 Total: ${jogadores.length}/21\n\n`;
+    texto += `👥 Total: ${jogadores.length}/${maxJogadores}\n\n`;
     if (pagos.length > 0) {
       texto += `✅ *Pagos (${pagos.length}):*\n`;
       pagos.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
@@ -353,7 +353,7 @@ const Admin = () => {
         <div className="grid grid-cols-3 gap-3 animate-slide-up">
           {[
             { icon: "📅", value: dataPelada, label: "Data", color: "" },
-            { icon: "👥", value: `${jogadores.length}/21`, label: "Jogadores", color: "" },
+            { icon: "👥", value: `${jogadores.length}/${maxJogadores}`, label: "Jogadores", color: "" },
             { icon: "💰", value: `R$ ${saldo}`, label: "Saldo", color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl border bg-card p-3.5 text-center shadow-sm transition-all duration-200 hover:shadow-md">
@@ -535,7 +535,7 @@ const Admin = () => {
               </div>
               <h2 className="text-sm font-bold text-foreground">Jogadores</h2>
               <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary tabular-nums">
-                {jogadores.length}/21
+                {jogadores.length}/${maxJogadores}
               </span>
             </div>
             {jogadores.length > 0 && (
@@ -661,7 +661,7 @@ const Admin = () => {
                 </div>
                 <div className="flex justify-between items-center border-t pt-1.5 mt-1.5">
                   <span className="font-semibold text-foreground">👥 Total:</span>
-                  <span className="font-bold tabular-nums">{jogadores.length}/21</span>
+                  <span className="font-bold tabular-nums">{jogadores.length}/${maxJogadores}</span>
                 </div>
               </div>
               <button
