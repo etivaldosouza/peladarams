@@ -460,6 +460,180 @@ const Admin = () => {
           </div>
         </section>
 
+        {/* Configuração da Pelada */}
+        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.07s", animationFillMode: "both" }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
+                <span className="text-lg">⚙️</span>
+              </div>
+              <h2 className="text-sm font-bold text-foreground">Configuração da Pelada</h2>
+            </div>
+            <button
+              onClick={() => {
+                setTempLocal(localPelada);
+                setTempMax(String(maxJogadores));
+                setTempQtdTimes(String(qtdTimes));
+                setTempGoleiros(goleirosFixos.join(", "));
+                setEditingConfig(!editingConfig);
+              }}
+              className="rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:bg-muted active:scale-95"
+            >
+              ✏️ Editar
+            </button>
+          </div>
+
+          {!editingConfig ? (
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Local</div>
+                <div className="font-bold text-foreground mt-0.5">{localPelada}</div>
+              </div>
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Máx. jogadores</div>
+                <div className="font-bold text-foreground mt-0.5 tabular-nums">{maxJogadores}</div>
+              </div>
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Qtd. times</div>
+                <div className="font-bold text-foreground mt-0.5 tabular-nums">{qtdTimes}</div>
+              </div>
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">🧤 Goleiros fixos</div>
+                <div className="font-bold text-foreground mt-0.5">
+                  {goleirosFixos.length > 0 ? goleirosFixos.join(", ") : "—"}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 rounded-xl bg-muted/40 border p-4 animate-scale-in">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">Local da pelada</label>
+                <input
+                  type="text"
+                  value={tempLocal}
+                  onChange={(e) => setTempLocal(e.target.value)}
+                  placeholder="Ex: Campo do Bairro"
+                  className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground">Máx. jogadores</label>
+                  <input
+                    type="number"
+                    value={tempMax}
+                    onChange={(e) => setTempMax(e.target.value)}
+                    className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground">Qtd. de times</label>
+                  <input
+                    type="number"
+                    value={tempQtdTimes}
+                    onChange={(e) => setTempQtdTimes(e.target.value)}
+                    className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">🧤 Goleiros fixos (separados por vírgula)</label>
+                <input
+                  type="text"
+                  value={tempGoleiros}
+                  onChange={(e) => setTempGoleiros(e.target.value)}
+                  placeholder="Ex: João, Pedro, Lucas"
+                  className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                />
+              </div>
+              <button
+                onClick={saveConfig}
+                className="w-full rounded-xl bg-primary px-3 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:brightness-110 active:scale-95"
+              >
+                💾 Salvar configuração
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Sorteio de Times */}
+        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent/15">
+              <span className="text-lg">🎲</span>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-foreground">Sorteio de Times</h2>
+              <p className="text-[11px] text-muted-foreground">
+                {sorteio ? "Times publicados na página principal" : "Nenhum sorteio publicado"}
+              </p>
+            </div>
+          </div>
+
+          {sorteioErro && (
+            <p className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-[11px] font-medium text-destructive">
+              {sorteioErro}
+            </p>
+          )}
+
+          <button
+            onClick={handleSortear}
+            className="w-full rounded-xl px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, hsl(142 70% 36%), hsl(142 70% 44%))" }}
+          >
+            {sorteio ? "🔄 Sortear novamente" : "🎲 Gerar sorteio"}
+          </button>
+
+          {sorteio && (
+            <div className="mt-4 space-y-3 animate-scale-in">
+              <div className="grid gap-2.5">
+                {sorteio.times.map((t) => (
+                  <div key={t.nome} className="rounded-xl border bg-muted/25 p-3.5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-base">{t.emoji}</span>
+                      <span className="text-xs font-extrabold tracking-wide text-foreground">{t.nome}</span>
+                    </div>
+                    {t.goleiro && (
+                      <div className="text-[11px] font-semibold text-primary mb-1">🧤 {t.goleiro}</div>
+                    )}
+                    <ul className="space-y-0.5">
+                      {t.jogadores.map((j) => (
+                        <li key={j} className="text-[11px] text-muted-foreground">• {j}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl border bg-primary/5 border-primary/15 p-3.5">
+                <h3 className="text-[11px] font-bold text-foreground mb-1.5">🏆 Ordem dos jogos</h3>
+                <ol className="space-y-0.5">
+                  {sorteio.ordem.map((o) => (
+                    <li key={o} className="text-[11px] text-muted-foreground">{o}</li>
+                  ))}
+                </ol>
+              </div>
+
+              <button
+                onClick={compartilharTimes}
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-95"
+                style={{ background: "linear-gradient(135deg, hsl(142 70% 36%), hsl(142 70% 44%))" }}
+              >
+                📱 Compartilhar times no WhatsApp
+              </button>
+
+              <button
+                onClick={encerrarRodada}
+                className="w-full rounded-xl border border-destructive/20 py-2.5 text-xs font-semibold text-destructive transition-all duration-200 hover:bg-destructive/5 active:scale-95"
+              >
+                🧹 Encerrar rodada (limpar sorteio)
+              </button>
+            </div>
+          )}
+        </section>
+
+
+
         {/* Caixa da Pelada */}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.09s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-4">
