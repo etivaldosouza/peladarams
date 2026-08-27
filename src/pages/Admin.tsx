@@ -71,21 +71,31 @@ const Admin = () => {
     }
   };
 
+  const applyConfig = (config: { chave: string; valor: string }[]) => {
+    for (const c of config) {
+      if (c.chave === "data_pelada") setDataPelada(c.valor);
+      if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
+      if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
+      if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
+      if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
+      if (c.chave === "local_pelada") { setLocalPelada(c.valor); setTempLocal(c.valor); }
+      if (c.chave === "max_jogadores") { setMaxJogadores(Number(c.valor) || 21); setTempMax(c.valor); }
+      if (c.chave === "qtd_times") { setQtdTimes(Number(c.valor) || 3); setTempQtdTimes(c.valor); }
+      if (c.chave === "goleiros_fixos") {
+        const lista = c.valor.split(",").map((g) => g.trim()).filter(Boolean);
+        setGoleirosFixos(lista);
+        setTempGoleiros(lista.join(", "));
+      }
+      if (c.chave === "sorteio_atual") setSorteio(parseSorteio(c.valor));
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
     const fetchData = async () => {
       await refreshJogadores();
-
       const { data: config } = await supabase.from("pelada_config").select("*");
-      if (config) {
-        for (const c of config) {
-          if (c.chave === "data_pelada") setDataPelada(c.valor);
-          if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
-          if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
-          if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
-          if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
-        }
-      }
+      if (config) applyConfig(config);
     };
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,18 +110,11 @@ const Admin = () => {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
         supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) {
-            for (const c of data) {
-              if (c.chave === "data_pelada") setDataPelada(c.valor);
-              if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
-              if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
-              if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
-              if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
-            }
-          }
+          if (data) applyConfig(data);
         });
       })
       .subscribe();
+
 
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
