@@ -5,6 +5,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  gerarSorteio,
+  parseSorteio,
+  textoTimesWhatsApp,
+  validarSorteio,
+  type Sorteio,
+} from "@/lib/sorteio";
 
 const ADMIN_PW_KEY = "admin_pw";
 
@@ -33,6 +40,18 @@ const Admin = () => {
   const [tempValorCampo, setTempValorCampo] = useState("110");
   const [tempValorJogador, setTempValorJogador] = useState("10");
   const [cadastroAberto, setCadastroAberto] = useState(true);
+  const [localPelada, setLocalPelada] = useState("A definir");
+  const [maxJogadores, setMaxJogadores] = useState(21);
+  const [qtdTimes, setQtdTimes] = useState(3);
+  const [goleirosFixos, setGoleirosFixos] = useState<string[]>([]);
+  const [editingConfig, setEditingConfig] = useState(false);
+  const [tempLocal, setTempLocal] = useState("A definir");
+  const [tempMax, setTempMax] = useState("21");
+  const [tempQtdTimes, setTempQtdTimes] = useState("3");
+  const [tempGoleiros, setTempGoleiros] = useState("");
+  const [sorteio, setSorteio] = useState<Sorteio | null>(null);
+  const [sorteioErro, setSorteioErro] = useState("");
+
 
   const callAdmin = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("admin-api", {
@@ -52,21 +71,31 @@ const Admin = () => {
     }
   };
 
+  const applyConfig = (config: { chave: string; valor: string }[]) => {
+    for (const c of config) {
+      if (c.chave === "data_pelada") setDataPelada(c.valor);
+      if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
+      if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
+      if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
+      if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
+      if (c.chave === "local_pelada") { setLocalPelada(c.valor); setTempLocal(c.valor); }
+      if (c.chave === "max_jogadores") { setMaxJogadores(Number(c.valor) || 21); setTempMax(c.valor); }
+      if (c.chave === "qtd_times") { setQtdTimes(Number(c.valor) || 3); setTempQtdTimes(c.valor); }
+      if (c.chave === "goleiros_fixos") {
+        const lista = c.valor.split(",").map((g) => g.trim()).filter(Boolean);
+        setGoleirosFixos(lista);
+        setTempGoleiros(lista.join(", "));
+      }
+      if (c.chave === "sorteio_atual") setSorteio(parseSorteio(c.valor));
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
     const fetchData = async () => {
       await refreshJogadores();
-
       const { data: config } = await supabase.from("pelada_config").select("*");
-      if (config) {
-        for (const c of config) {
-          if (c.chave === "data_pelada") setDataPelada(c.valor);
-          if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
-          if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
-          if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
-          if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
-        }
-      }
+      if (config) applyConfig(config);
     };
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,18 +110,11 @@ const Admin = () => {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
         supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) {
-            for (const c of data) {
-              if (c.chave === "data_pelada") setDataPelada(c.valor);
-              if (c.chave === "horario_pelada") { setHorarioPelada(c.valor); setTempHorario(c.valor); }
-              if (c.chave === "valor_campo") { setValorCampo(Number(c.valor)); setTempValorCampo(c.valor); }
-              if (c.chave === "valor_jogador") { setValorJogador(Number(c.valor)); setTempValorJogador(c.valor); }
-              if (c.chave === "cadastro_aberto") setCadastroAberto(c.valor === "true");
-            }
-          }
+          if (data) applyConfig(data);
         });
       })
       .subscribe();
+
 
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,6 +195,22 @@ const Admin = () => {
   };
 
 
+  const saveConfig = async () => {
+    const local = tempLocal.trim() || "A definir";
+    const max = Math.max(2, Math.min(60, Number(tempMax) || 21));
+    const times = Math.max(2, Math.min(6, Number(tempQtdTimes) || 3));
+    const goleiros = tempGoleiros.split(",").map((g) => g.trim()).filter(Boolean);
+    await callAdmin({ action: "set_config", chave: "local_pelada", valor: local });
+    await callAdmin({ action: "set_config", chave: "max_jogadores", valor: String(max) });
+    await callAdmin({ action: "set_config", chave: "qtd_times", valor: String(times) });
+    await callAdmin({ action: "set_config", chave: "goleiros_fixos", valor: goleiros.join(", ") });
+    setLocalPelada(local);
+    setMaxJogadores(max);
+    setQtdTimes(times);
+    setGoleirosFixos(goleiros);
+    setEditingConfig(false);
+  };
+
   const WHATSAPP_NUMBER = "5598981986302";
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
   const saldo = totalArrecadado;
@@ -183,6 +221,36 @@ const Admin = () => {
     if (a.status !== "pago" && b.status === "pago") return 1;
     return 0;
   });
+
+  const cabecalhoPelada = `📅 ${dataPelada} | ⏰ ${horarioPelada}${localPelada && localPelada !== "A definir" ? ` | 📍 ${localPelada}` : ""}`;
+
+  const handleSortear = async () => {
+    setSorteioErro("");
+    const inscritos = jogadores.map((j) => j.nome);
+    const erro = validarSorteio({ inscritos, goleirosFixos, qtdTimes });
+    if (erro && !erro.startsWith("Atenção")) {
+      setSorteioErro(erro);
+      return;
+    }
+    if (erro) setSorteioErro(erro);
+    const novo = gerarSorteio({ inscritos, goleirosFixos, qtdTimes });
+    setSorteio(novo);
+    await callAdmin({ action: "set_config", chave: "sorteio_atual", valor: JSON.stringify(novo) });
+  };
+
+  const compartilharTimes = () => {
+    if (!sorteio) return;
+    const texto = textoTimesWhatsApp(sorteio, cabecalhoPelada);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
+  };
+
+  const encerrarRodada = async () => {
+    if (!window.confirm("Encerrar a rodada? Os times sorteados serão apagados. Jogadores, financeiro e configurações permanecem.")) return;
+    setSorteio(null);
+    setSorteioErro("");
+    await callAdmin({ action: "set_config", chave: "sorteio_atual", valor: "" });
+  };
+
 
   const gerarRelatorio = () => {
     let texto = `📊 *PRESTAÇÃO DE CONTAS*\n`;
@@ -201,7 +269,7 @@ const Admin = () => {
     let texto = `📋 *RELATÓRIO DE JOGADORES*\n`;
     texto += `📅 ${dataPelada} | ⏰ ${horarioPelada}\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
-    texto += `👥 Total: ${jogadores.length}/21\n\n`;
+    texto += `👥 Total: ${jogadores.length}/${maxJogadores}\n\n`;
     if (pagos.length > 0) {
       texto += `✅ *Pagos (${pagos.length}):*\n`;
       pagos.forEach((j, i) => { texto += `  ${i + 1}. ${j.nome}\n`; });
@@ -285,7 +353,7 @@ const Admin = () => {
         <div className="grid grid-cols-3 gap-3 animate-slide-up">
           {[
             { icon: "📅", value: dataPelada, label: "Data", color: "" },
-            { icon: "👥", value: `${jogadores.length}/21`, label: "Jogadores", color: "" },
+            { icon: "👥", value: `${jogadores.length}/${maxJogadores}`, label: "Jogadores", color: "" },
             { icon: "💰", value: `R$ ${saldo}`, label: "Saldo", color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" },
           ].map((item) => (
             <div key={item.label} className="rounded-2xl border bg-card p-3.5 text-center shadow-sm transition-all duration-200 hover:shadow-md">
@@ -392,6 +460,180 @@ const Admin = () => {
           </div>
         </section>
 
+        {/* Configuração da Pelada */}
+        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.07s", animationFillMode: "both" }}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
+                <span className="text-lg">⚙️</span>
+              </div>
+              <h2 className="text-sm font-bold text-foreground">Configuração da Pelada</h2>
+            </div>
+            <button
+              onClick={() => {
+                setTempLocal(localPelada);
+                setTempMax(String(maxJogadores));
+                setTempQtdTimes(String(qtdTimes));
+                setTempGoleiros(goleirosFixos.join(", "));
+                setEditingConfig(!editingConfig);
+              }}
+              className="rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:bg-muted active:scale-95"
+            >
+              ✏️ Editar
+            </button>
+          </div>
+
+          {!editingConfig ? (
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Local</div>
+                <div className="font-bold text-foreground mt-0.5">{localPelada}</div>
+              </div>
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Máx. jogadores</div>
+                <div className="font-bold text-foreground mt-0.5 tabular-nums">{maxJogadores}</div>
+              </div>
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">Qtd. times</div>
+                <div className="font-bold text-foreground mt-0.5 tabular-nums">{qtdTimes}</div>
+              </div>
+              <div className="rounded-xl bg-muted/30 border p-3">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold">🧤 Goleiros fixos</div>
+                <div className="font-bold text-foreground mt-0.5">
+                  {goleirosFixos.length > 0 ? goleirosFixos.join(", ") : "—"}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 rounded-xl bg-muted/40 border p-4 animate-scale-in">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">Local da pelada</label>
+                <input
+                  type="text"
+                  value={tempLocal}
+                  onChange={(e) => setTempLocal(e.target.value)}
+                  placeholder="Ex: Campo do Bairro"
+                  className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground">Máx. jogadores</label>
+                  <input
+                    type="number"
+                    value={tempMax}
+                    onChange={(e) => setTempMax(e.target.value)}
+                    className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-muted-foreground">Qtd. de times</label>
+                  <input
+                    type="number"
+                    value={tempQtdTimes}
+                    onChange={(e) => setTempQtdTimes(e.target.value)}
+                    className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground">🧤 Goleiros fixos (separados por vírgula)</label>
+                <input
+                  type="text"
+                  value={tempGoleiros}
+                  onChange={(e) => setTempGoleiros(e.target.value)}
+                  placeholder="Ex: João, Pedro, Lucas"
+                  className="mt-1 w-full rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+                />
+              </div>
+              <button
+                onClick={saveConfig}
+                className="w-full rounded-xl bg-primary px-3 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:brightness-110 active:scale-95"
+              >
+                💾 Salvar configuração
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Sorteio de Times */}
+        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent/15">
+              <span className="text-lg">🎲</span>
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-foreground">Sorteio de Times</h2>
+              <p className="text-[11px] text-muted-foreground">
+                {sorteio ? "Times publicados na página principal" : "Nenhum sorteio publicado"}
+              </p>
+            </div>
+          </div>
+
+          {sorteioErro && (
+            <p className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-[11px] font-medium text-destructive">
+              {sorteioErro}
+            </p>
+          )}
+
+          <button
+            onClick={handleSortear}
+            className="w-full rounded-xl px-4 py-3 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, hsl(142 70% 36%), hsl(142 70% 44%))" }}
+          >
+            {sorteio ? "🔄 Sortear novamente" : "🎲 Gerar sorteio"}
+          </button>
+
+          {sorteio && (
+            <div className="mt-4 space-y-3 animate-scale-in">
+              <div className="grid gap-2.5">
+                {sorteio.times.map((t) => (
+                  <div key={t.nome} className="rounded-xl border bg-muted/25 p-3.5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-base">{t.emoji}</span>
+                      <span className="text-xs font-extrabold tracking-wide text-foreground">{t.nome}</span>
+                    </div>
+                    {t.goleiro && (
+                      <div className="text-[11px] font-semibold text-primary mb-1">🧤 {t.goleiro}</div>
+                    )}
+                    <ul className="space-y-0.5">
+                      {t.jogadores.map((j) => (
+                        <li key={j} className="text-[11px] text-muted-foreground">• {j}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl border bg-primary/5 border-primary/15 p-3.5">
+                <h3 className="text-[11px] font-bold text-foreground mb-1.5">🏆 Ordem dos jogos</h3>
+                <ol className="space-y-0.5">
+                  {sorteio.ordem.map((o) => (
+                    <li key={o} className="text-[11px] text-muted-foreground">{o}</li>
+                  ))}
+                </ol>
+              </div>
+
+              <button
+                onClick={compartilharTimes}
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-95"
+                style={{ background: "linear-gradient(135deg, hsl(142 70% 36%), hsl(142 70% 44%))" }}
+              >
+                📱 Compartilhar times no WhatsApp
+              </button>
+
+              <button
+                onClick={encerrarRodada}
+                className="w-full rounded-xl border border-destructive/20 py-2.5 text-xs font-semibold text-destructive transition-all duration-200 hover:bg-destructive/5 active:scale-95"
+              >
+                🧹 Encerrar rodada (limpar sorteio)
+              </button>
+            </div>
+          )}
+        </section>
+
+
+
         {/* Caixa da Pelada */}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.09s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-4">
@@ -467,7 +709,7 @@ const Admin = () => {
               </div>
               <h2 className="text-sm font-bold text-foreground">Jogadores</h2>
               <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary tabular-nums">
-                {jogadores.length}/21
+                {jogadores.length}/{maxJogadores}
               </span>
             </div>
             {jogadores.length > 0 && (
@@ -593,7 +835,7 @@ const Admin = () => {
                 </div>
                 <div className="flex justify-between items-center border-t pt-1.5 mt-1.5">
                   <span className="font-semibold text-foreground">👥 Total:</span>
-                  <span className="font-bold tabular-nums">{jogadores.length}/21</span>
+                  <span className="font-bold tabular-nums">{jogadores.length}/{maxJogadores}</span>
                 </div>
               </div>
               <button
