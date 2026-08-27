@@ -535,7 +535,7 @@ const Admin = () => {
               </div>
               <h2 className="text-sm font-bold text-foreground">Jogadores</h2>
               <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary tabular-nums">
-                {jogadores.length}/${maxJogadores}
+                {jogadores.length}/{maxJogadores}
               </span>
             </div>
             {jogadores.length > 0 && (
@@ -661,7 +661,7 @@ const Admin = () => {
                 </div>
                 <div className="flex justify-between items-center border-t pt-1.5 mt-1.5">
                   <span className="font-semibold text-foreground">👥 Total:</span>
-                  <span className="font-bold tabular-nums">{jogadores.length}/${maxJogadores}</span>
+                  <span className="font-bold tabular-nums">{jogadores.length}/{maxJogadores}</span>
                 </div>
               </div>
               <button
