@@ -5,6 +5,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  gerarSorteio,
+  parseSorteio,
+  textoTimesWhatsApp,
+  validarSorteio,
+  type Sorteio,
+} from "@/lib/sorteio";
 
 const ADMIN_PW_KEY = "admin_pw";
 
@@ -33,6 +40,18 @@ const Admin = () => {
   const [tempValorCampo, setTempValorCampo] = useState("110");
   const [tempValorJogador, setTempValorJogador] = useState("10");
   const [cadastroAberto, setCadastroAberto] = useState(true);
+  const [localPelada, setLocalPelada] = useState("A definir");
+  const [maxJogadores, setMaxJogadores] = useState(21);
+  const [qtdTimes, setQtdTimes] = useState(3);
+  const [goleirosFixos, setGoleirosFixos] = useState<string[]>([]);
+  const [editingConfig, setEditingConfig] = useState(false);
+  const [tempLocal, setTempLocal] = useState("A definir");
+  const [tempMax, setTempMax] = useState("21");
+  const [tempQtdTimes, setTempQtdTimes] = useState("3");
+  const [tempGoleiros, setTempGoleiros] = useState("");
+  const [sorteio, setSorteio] = useState<Sorteio | null>(null);
+  const [sorteioErro, setSorteioErro] = useState("");
+
 
   const callAdmin = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("admin-api", {
