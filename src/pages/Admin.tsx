@@ -195,6 +195,22 @@ const Admin = () => {
   };
 
 
+  const saveConfig = async () => {
+    const local = tempLocal.trim() || "A definir";
+    const max = Math.max(2, Math.min(60, Number(tempMax) || 21));
+    const times = Math.max(2, Math.min(6, Number(tempQtdTimes) || 3));
+    const goleiros = tempGoleiros.split(",").map((g) => g.trim()).filter(Boolean);
+    await callAdmin({ action: "set_config", chave: "local_pelada", valor: local });
+    await callAdmin({ action: "set_config", chave: "max_jogadores", valor: String(max) });
+    await callAdmin({ action: "set_config", chave: "qtd_times", valor: String(times) });
+    await callAdmin({ action: "set_config", chave: "goleiros_fixos", valor: goleiros.join(", ") });
+    setLocalPelada(local);
+    setMaxJogadores(max);
+    setQtdTimes(times);
+    setGoleirosFixos(goleiros);
+    setEditingConfig(false);
+  };
+
   const WHATSAPP_NUMBER = "5598981986302";
   const totalArrecadado = jogadores.filter((j) => j.status === "pago").length * valorJogador;
   const saldo = totalArrecadado;
@@ -205,6 +221,36 @@ const Admin = () => {
     if (a.status !== "pago" && b.status === "pago") return 1;
     return 0;
   });
+
+  const cabecalhoPelada = `📅 ${dataPelada} | ⏰ ${horarioPelada}${localPelada && localPelada !== "A definir" ? ` | 📍 ${localPelada}` : ""}`;
+
+  const handleSortear = async () => {
+    setSorteioErro("");
+    const inscritos = jogadores.map((j) => j.nome);
+    const erro = validarSorteio({ inscritos, goleirosFixos, qtdTimes });
+    if (erro && !erro.startsWith("Atenção")) {
+      setSorteioErro(erro);
+      return;
+    }
+    if (erro) setSorteioErro(erro);
+    const novo = gerarSorteio({ inscritos, goleirosFixos, qtdTimes });
+    setSorteio(novo);
+    await callAdmin({ action: "set_config", chave: "sorteio_atual", valor: JSON.stringify(novo) });
+  };
+
+  const compartilharTimes = () => {
+    if (!sorteio) return;
+    const texto = textoTimesWhatsApp(sorteio, cabecalhoPelada);
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
+  };
+
+  const encerrarRodada = async () => {
+    if (!window.confirm("Encerrar a rodada? Os times sorteados serão apagados. Jogadores, financeiro e configurações permanecem.")) return;
+    setSorteio(null);
+    setSorteioErro("");
+    await callAdmin({ action: "set_config", chave: "sorteio_atual", valor: "" });
+  };
+
 
   const gerarRelatorio = () => {
     let texto = `📊 *PRESTAÇÃO DE CONTAS*\n`;
