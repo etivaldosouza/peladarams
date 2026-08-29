@@ -459,15 +459,26 @@ const Index = () => {
               <h2 className="text-base font-bold text-foreground">Times da Pelada</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {sorteio.times.map((t) => (
-                <div key={t.nome} className="rounded-xl border bg-muted/20 p-4">
-                  <h3 className="text-sm font-extrabold text-foreground mb-2.5">
-                    {t.emoji} {t.nome}
-                  </h3>
-                  <ul className="space-y-1.5">
+                <div
+                  key={t.nome}
+                  className="overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-200 hover:shadow-md"
+                  style={{ borderColor: `hsl(${t.cor ?? "142 72% 29%"} / 0.35)` }}
+                >
+                  <div
+                    className="flex items-center gap-2 px-4 py-2.5"
+                    style={{ background: `hsl(${t.cor ?? "142 72% 29%"} / 0.12)` }}
+                  >
+                    <span
+                      className="h-4 w-4 rounded-full ring-2 ring-background shrink-0"
+                      style={{ background: `hsl(${t.cor ?? "142 72% 29%"})` }}
+                    />
+                    <h3 className="text-sm font-extrabold tracking-wide text-foreground">{t.nome}</h3>
+                  </div>
+                  <ul className="space-y-1.5 p-4">
                     {t.goleiro && (
-                      <li className="flex items-center gap-2 text-sm font-semibold text-primary">
+                      <li className="flex items-center gap-2 text-sm font-bold text-primary">
                         <span>🧤</span>
                         <span className="truncate">{t.goleiro}</span>
                       </li>
@@ -482,6 +493,7 @@ const Index = () => {
                 </div>
               ))}
             </div>
+
 
             <div className="mt-4 space-y-2">
               <div className="rounded-xl border border-accent/30 bg-accent/10 p-4 text-center">
