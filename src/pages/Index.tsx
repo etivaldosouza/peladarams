@@ -306,8 +306,22 @@ const Index = () => {
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 -mt-2 relative z-10 py-5">
+        {/* Aviso de lista completa */}
+        {vagasRestantes <= 0 && (
+          <div className="animate-scale-in rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+            <span className="text-2xl leading-none">🚫</span>
+            <div>
+              <p className="text-sm font-extrabold text-destructive">Lista completa!</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Já são {maxJogadores} jogadores inscritos. As inscrições estão encerradas para esta pelada — fique atento à próxima rodada.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Cadastro */}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
+
           <div className="flex items-center gap-2.5 mb-4">
             <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
               <span className="text-lg">📋</span>
