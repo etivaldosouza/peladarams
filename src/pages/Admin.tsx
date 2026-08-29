@@ -586,24 +586,37 @@ const Admin = () => {
 
           {sorteio && (
             <div className="mt-4 space-y-3 animate-scale-in">
-              <div className="grid gap-2.5">
+              <div className="grid gap-2.5 sm:grid-cols-2">
                 {sorteio.times.map((t) => (
-                  <div key={t.nome} className="rounded-xl border bg-muted/25 p-3.5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-base">{t.emoji}</span>
+                  <div
+                    key={t.nome}
+                    className="overflow-hidden rounded-xl border bg-card"
+                    style={{ borderColor: `hsl(${t.cor ?? "142 72% 29%"} / 0.35)` }}
+                  >
+                    <div
+                      className="flex items-center gap-2 px-3.5 py-2"
+                      style={{ background: `hsl(${t.cor ?? "142 72% 29%"} / 0.12)` }}
+                    >
+                      <span
+                        className="h-3.5 w-3.5 rounded-full ring-2 ring-background shrink-0"
+                        style={{ background: `hsl(${t.cor ?? "142 72% 29%"})` }}
+                      />
                       <span className="text-xs font-extrabold tracking-wide text-foreground">{t.nome}</span>
                     </div>
-                    {t.goleiro && (
-                      <div className="text-[11px] font-semibold text-primary mb-1">🧤 {t.goleiro}</div>
-                    )}
-                    <ul className="space-y-0.5">
-                      {t.jogadores.map((j) => (
-                        <li key={j} className="text-[11px] text-muted-foreground">• {j}</li>
-                      ))}
-                    </ul>
+                    <div className="p-3.5 pt-2.5">
+                      {t.goleiro && (
+                        <div className="text-[11px] font-semibold text-primary mb-1">🧤 {t.goleiro}</div>
+                      )}
+                      <ul className="space-y-0.5">
+                        {t.jogadores.map((j) => (
+                          <li key={j} className="text-[11px] text-muted-foreground">• {j}</li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 ))}
               </div>
+
 
               <div className="rounded-xl border bg-primary/5 border-primary/15 p-3.5">
                 <h3 className="text-[11px] font-bold text-foreground mb-1.5">🏆 Ordem dos jogos</h3>
@@ -701,7 +714,19 @@ const Admin = () => {
         </section>
 
         {/* Jogadores */}
+        {jogadores.length >= maxJogadores && (
+          <div className="animate-scale-in rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+            <span className="text-2xl leading-none">🚫</span>
+            <div>
+              <p className="text-sm font-extrabold text-destructive">Lista completa!</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {maxJogadores} jogadores inscritos — o limite foi atingido.
+              </p>
+            </div>
+          </div>
+        )}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.12s", animationFillMode: "both" }}>
+
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">

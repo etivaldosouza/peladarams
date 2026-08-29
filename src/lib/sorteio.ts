@@ -1,6 +1,7 @@
 export interface TimeSorteado {
   nome: string;
   emoji: string;
+  cor?: string;
   goleiro: string | null;
   jogadores: string[];
 }
@@ -13,7 +14,16 @@ export interface Sorteio {
   ordem: string[];
 }
 
-const EMOJIS = ["🔵", "⚫", "🔴", "🟡", "🟢", "🟣"];
+/** Times identificados pelas cores dos coletes. */
+export const CORES_TIMES = [
+  { nome: "AZUL", emoji: "🔵", cor: "215 90% 50%" },
+  { nome: "PRETO", emoji: "⚫", cor: "0 0% 15%" },
+  { nome: "VERMELHO", emoji: "🔴", cor: "0 80% 50%" },
+  { nome: "AMARELO", emoji: "🟡", cor: "45 95% 48%" },
+  { nome: "VERDE", emoji: "🟢", cor: "142 72% 32%" },
+  { nome: "ROXO", emoji: "🟣", cor: "275 65% 50%" },
+];
+
 
 /** Embaralhamento Fisher-Yates usando crypto quando disponível. */
 export function embaralhar<T>(lista: T[]): T[] {
@@ -61,9 +71,11 @@ export function gerarSorteio({ inscritos, goleirosFixos, qtdTimes }: GerarParams
   );
 
   const times: TimeSorteado[] = Array.from({ length: qtdTimes }, (_, i) => ({
-    nome: `TIME ${i + 1}`,
-    emoji: EMOJIS[i % EMOJIS.length],
+    nome: `TIME ${CORES_TIMES[i % CORES_TIMES.length].nome}`,
+    emoji: CORES_TIMES[i % CORES_TIMES.length].emoji,
+    cor: CORES_TIMES[i % CORES_TIMES.length].cor,
     goleiro: goleiros[i] ?? null,
+
     jogadores: [],
   }));
 

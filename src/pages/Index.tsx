@@ -306,8 +306,22 @@ const Index = () => {
       </header>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 -mt-2 relative z-10 py-5">
+        {/* Aviso de lista completa */}
+        {vagasRestantes <= 0 && (
+          <div className="animate-scale-in rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+            <span className="text-2xl leading-none">🚫</span>
+            <div>
+              <p className="text-sm font-extrabold text-destructive">Lista completa!</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Já são {maxJogadores} jogadores inscritos. As inscrições estão encerradas para esta pelada — fique atento à próxima rodada.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Cadastro */}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
+
           <div className="flex items-center gap-2.5 mb-4">
             <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
               <span className="text-lg">📋</span>
@@ -445,15 +459,26 @@ const Index = () => {
               <h2 className="text-base font-bold text-foreground">Times da Pelada</h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {sorteio.times.map((t) => (
-                <div key={t.nome} className="rounded-xl border bg-muted/20 p-4">
-                  <h3 className="text-sm font-extrabold text-foreground mb-2.5">
-                    {t.emoji} {t.nome}
-                  </h3>
-                  <ul className="space-y-1.5">
+                <div
+                  key={t.nome}
+                  className="overflow-hidden rounded-2xl border bg-card shadow-sm transition-all duration-200 hover:shadow-md"
+                  style={{ borderColor: `hsl(${t.cor ?? "142 72% 29%"} / 0.35)` }}
+                >
+                  <div
+                    className="flex items-center gap-2 px-4 py-2.5"
+                    style={{ background: `hsl(${t.cor ?? "142 72% 29%"} / 0.12)` }}
+                  >
+                    <span
+                      className="h-4 w-4 rounded-full ring-2 ring-background shrink-0"
+                      style={{ background: `hsl(${t.cor ?? "142 72% 29%"})` }}
+                    />
+                    <h3 className="text-sm font-extrabold tracking-wide text-foreground">{t.nome}</h3>
+                  </div>
+                  <ul className="space-y-1.5 p-4">
                     {t.goleiro && (
-                      <li className="flex items-center gap-2 text-sm font-semibold text-primary">
+                      <li className="flex items-center gap-2 text-sm font-bold text-primary">
                         <span>🧤</span>
                         <span className="truncate">{t.goleiro}</span>
                       </li>
@@ -468,6 +493,7 @@ const Index = () => {
                 </div>
               ))}
             </div>
+
 
             <div className="mt-4 space-y-2">
               <div className="rounded-xl border border-accent/30 bg-accent/10 p-4 text-center">
