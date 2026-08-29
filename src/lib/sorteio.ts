@@ -16,13 +16,14 @@ export interface Sorteio {
 
 /** Times identificados pelas cores dos coletes. */
 export const CORES_TIMES = [
-  { nome: "AZUL", emoji: "🔵", cor: "215 90% 50%" },
-  { nome: "PRETO", emoji: "⚫", cor: "0 0% 15%" },
   { nome: "VERMELHO", emoji: "🔴", cor: "0 80% 50%" },
+  { nome: "PRETO", emoji: "⚫", cor: "0 0% 15%" },
+  { nome: "AZUL", emoji: "🔵", cor: "215 90% 50%" },
   { nome: "AMARELO", emoji: "🟡", cor: "45 95% 48%" },
   { nome: "VERDE", emoji: "🟢", cor: "142 72% 32%" },
   { nome: "ROXO", emoji: "🟣", cor: "275 65% 50%" },
 ];
+
 
 
 /** Embaralhamento Fisher-Yates usando crypto quando disponível. */
