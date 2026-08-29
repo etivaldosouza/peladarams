@@ -119,13 +119,29 @@ export function textoTimesWhatsApp(s: Sorteio, cabecalho: string): string {
   return texto;
 }
 
+/** Converte sorteios antigos ("TIME 1") para os nomes por cor. */
+export function normalizarSorteio(s: Sorteio): Sorteio {
+  const times = s.times.map((t, i) => {
+    const c = CORES_TIMES[i % CORES_TIMES.length];
+    return { ...t, nome: `TIME ${c.nome}`, emoji: c.emoji, cor: c.cor };
+  });
+  const ordem: string[] = [
+    `1º JOGO: ${times[s.primeiroJogo[0]].nome} × ${times[s.primeiroJogo[1]].nome}`,
+  ];
+  s.aguarda.forEach((t, i) => {
+    ordem.push(`${i + 2}º JOGO: ${times[t].nome} × vencedor do jogo anterior`);
+  });
+  return { ...s, times, ordem };
+}
+
 export function parseSorteio(valor: string | null | undefined): Sorteio | null {
   if (!valor) return null;
   try {
     const parsed = JSON.parse(valor) as Sorteio;
     if (!parsed?.times?.length) return null;
-    return parsed;
+    return normalizarSorteio(parsed);
   } catch {
     return null;
   }
 }
+
