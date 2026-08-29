@@ -71,9 +71,11 @@ export function gerarSorteio({ inscritos, goleirosFixos, qtdTimes }: GerarParams
   );
 
   const times: TimeSorteado[] = Array.from({ length: qtdTimes }, (_, i) => ({
-    nome: `TIME ${i + 1}`,
-    emoji: EMOJIS[i % EMOJIS.length],
+    nome: `TIME ${CORES_TIMES[i % CORES_TIMES.length].nome}`,
+    emoji: CORES_TIMES[i % CORES_TIMES.length].emoji,
+    cor: CORES_TIMES[i % CORES_TIMES.length].cor,
     goleiro: goleiros[i] ?? null,
+
     jogadores: [],
   }));
 
