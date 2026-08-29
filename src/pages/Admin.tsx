@@ -714,7 +714,19 @@ const Admin = () => {
         </section>
 
         {/* Jogadores */}
+        {jogadores.length >= maxJogadores && (
+          <div className="animate-scale-in rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+            <span className="text-2xl leading-none">🚫</span>
+            <div>
+              <p className="text-sm font-extrabold text-destructive">Lista completa!</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {maxJogadores} jogadores inscritos — o limite foi atingido.
+              </p>
+            </div>
+          </div>
+        )}
         <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.12s", animationFillMode: "both" }}>
+
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
