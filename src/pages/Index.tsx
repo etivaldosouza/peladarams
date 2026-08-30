@@ -245,74 +245,90 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Header */}
-      <header className="relative overflow-hidden px-4 py-10 text-center text-primary-foreground"
-        style={{ background: "linear-gradient(145deg, hsl(142 72% 18%), hsl(142 72% 28%), hsl(142 55% 35%))" }}
+      <header
+        className="relative overflow-hidden px-4 pt-12 pb-28 text-primary-foreground"
+        style={{ background: "var(--gradient-hero)" }}
       >
-        {/* Decorative elements */}
-        <div className="absolute inset-0 opacity-[0.07]"
-          style={{ backgroundImage: "radial-gradient(circle at 25% 75%, white 1.5px, transparent 1.5px), radial-gradient(circle at 75% 25%, white 1px, transparent 1px)", backgroundSize: "80px 80px, 50px 50px" }}
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+          }}
         />
-        <div className="absolute top-0 left-0 w-64 h-64 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, white, transparent 70%)", transform: "translate(-30%, -30%)" }}
-        />
-        <div className="absolute bottom-0 right-0 w-48 h-48 rounded-full opacity-[0.06]"
-          style={{ background: "radial-gradient(circle, white, transparent 70%)", transform: "translate(20%, 20%)" }}
+        <div
+          className="absolute -top-24 -right-16 h-72 w-72 rounded-full opacity-20 blur-2xl"
+          style={{ background: "radial-gradient(circle, hsl(160 84% 45%), transparent 65%)" }}
         />
 
-        <div className="relative">
-          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary-foreground/15 backdrop-blur-sm mb-3 shadow-lg">
-            <span className="text-3xl">⚽</span>
+        <div className="relative mx-auto max-w-lg">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-foreground/10 ring-1 ring-primary-foreground/20 backdrop-blur-sm">
+              <span className="text-xl">⚽</span>
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-display text-xl font-bold leading-tight">Pelada da Semana</h1>
+              {localPelada && (
+                <p className="truncate text-xs font-medium text-primary-foreground/60">📍 {localPelada}</p>
+              )}
+            </div>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Pelada da Semana</h1>
-          <p className="text-sm opacity-70 mt-1 font-medium">Organize, jogue e se divirta!</p>
 
-          <div className="mt-6 grid grid-cols-3 gap-3 max-w-sm mx-auto">
+          <div className="mt-7 grid grid-cols-3 gap-2.5">
             {[
               { icon: "📅", value: dataPelada, label: "Data" },
               { icon: "⏰", value: horarioPelada, label: "Horário" },
-              { icon: "🎯", value: vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""}` : "Lotado!", label: "Restantes" },
+              {
+                icon: "🎯",
+                value: vagasRestantes > 0 ? `${vagasRestantes} vaga${vagasRestantes !== 1 ? "s" : ""}` : "Lotado",
+                label: "Restantes",
+              },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl bg-primary-foreground/10 backdrop-blur-md px-3 py-3.5 border border-primary-foreground/15 transition-all duration-300 hover:bg-primary-foreground/15 hover:scale-[1.03]">
-                <div className="text-xl mb-1.5">{item.icon}</div>
-                <div className="text-sm font-bold leading-tight">{item.value}</div>
-                <div className="text-[10px] opacity-50 uppercase tracking-[0.15em] mt-1 font-semibold">{item.label}</div>
+              <div
+                key={item.label}
+                className="rounded-2xl border border-primary-foreground/10 bg-primary-foreground/[0.07] px-3 py-3 backdrop-blur-md transition-colors duration-300 hover:bg-primary-foreground/[0.12]"
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-foreground/50">
+                  {item.label}
+                </div>
+                <div className="mt-1.5 font-display text-sm font-semibold leading-tight">{item.value}</div>
               </div>
             ))}
           </div>
 
-          {localPelada && (
-            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/15 px-4 py-1.5 text-xs font-semibold backdrop-blur-md">
-              📍 {localPelada}
-            </div>
-          )}
-
-
           {/* Progress bar */}
-          <div className="mt-5 max-w-sm mx-auto">
-            <div className="h-2 rounded-full bg-primary-foreground/15 overflow-hidden shadow-inner">
+          <div className="mt-6">
+            <div className="flex items-baseline justify-between text-xs font-medium text-primary-foreground/60">
+              <span>Confirmados</span>
+              <span className="font-display font-semibold text-primary-foreground tabular-nums">
+                {jogadores.length}/{maxJogadores}
+              </span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-primary-foreground/15">
               <div
                 className="h-full rounded-full transition-all duration-1000 ease-out"
                 style={{
                   width: `${porcentagemOcupada}%`,
-                  background: porcentagemOcupada >= 100
-                    ? "linear-gradient(90deg, hsl(0 84% 55%), hsl(0 84% 65%))"
-                    : "linear-gradient(90deg, hsl(48 96% 55%), hsl(48 96% 70%))",
+                  background:
+                    porcentagemOcupada >= 100
+                      ? "linear-gradient(90deg, hsl(0 72% 51%), hsl(0 72% 62%))"
+                      : "linear-gradient(90deg, hsl(160 84% 40%), hsl(160 70% 58%))",
                 }}
               />
             </div>
-            <p className="text-[11px] opacity-50 mt-1.5 font-medium">{jogadores.length}/{maxJogadores} confirmados</p>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-lg space-y-4 px-4 -mt-2 relative z-10 py-5">
+      <main className="mx-auto -mt-16 max-w-lg space-y-4 px-4 pb-6 relative z-10">
         {/* Aviso de lista completa */}
         {vagasRestantes <= 0 && (
-          <div className="animate-scale-in rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+          <div className="animate-scale-in flex items-start gap-3 rounded-3xl border border-destructive/20 bg-card p-4 shadow-card">
             <span className="text-2xl leading-none">🚫</span>
             <div>
-              <p className="text-sm font-extrabold text-destructive">Lista completa!</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="font-display text-sm font-bold text-destructive">Lista completa!</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 Já são {maxJogadores} jogadores inscritos. As inscrições estão encerradas para esta pelada — fique atento à próxima rodada.
               </p>
             </div>
@@ -320,14 +336,15 @@ const Index = () => {
         )}
 
         {/* Cadastro */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
+        <section className="animate-slide-up card-surface p-6">
 
-          <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex items-center gap-2.5 mb-5">
             <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
               <span className="text-lg">📋</span>
             </div>
-            <h2 className="text-base font-bold text-foreground">Cadastro</h2>
+            <h2 className="font-display text-base font-semibold text-foreground">Cadastro</h2>
           </div>
+
           {!cadastroAberto ? (
             <div className="text-center py-6 rounded-xl bg-destructive/5 border border-destructive/10">
               <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-destructive/10 mb-3">
@@ -411,13 +428,13 @@ const Index = () => {
         </section>
 
         {/* Pix */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
           <div className="flex items-center gap-2.5 mb-4">
             <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent/15">
               <span className="text-lg">💰</span>
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">Pagamento via Pix</h2>
+              <h2 className="font-display text-base font-semibold text-foreground">Pagamento via Pix</h2>
               <p className="text-xs text-muted-foreground">R$ {valorJogador},00 por jogador</p>
             </div>
           </div>
@@ -451,12 +468,12 @@ const Index = () => {
 
         {/* Times da Pelada */}
         {sorteio && (
-          <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
+          <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
             <div className="flex items-center gap-2.5 mb-4">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">⚽</span>
               </div>
-              <h2 className="text-base font-bold text-foreground">Times da Pelada</h2>
+              <h2 className="font-display text-base font-semibold text-foreground">Times da Pelada</h2>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -515,13 +532,13 @@ const Index = () => {
 
         {/* Jogadores */}
 
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">⚽</span>
               </div>
-              <h2 className="text-base font-bold text-foreground">Jogadores</h2>
+              <h2 className="font-display text-base font-semibold text-foreground">Jogadores</h2>
             </div>
             <span className="rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary tabular-nums">
               {jogadores.length}/{maxJogadores}
@@ -567,7 +584,8 @@ const Index = () => {
             </div>
           )}
         </section>
-      </div>
+      </main>
+
 
       <footer className="mt-4 pb-8 text-center">
         <div className="mx-auto max-w-lg px-4">

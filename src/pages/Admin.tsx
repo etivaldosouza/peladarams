@@ -295,12 +295,12 @@ const Admin = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="animate-scale-in rounded-2xl border bg-card p-8 shadow-lg w-full max-w-sm">
+        <div className="animate-scale-in rounded-3xl border bg-card p-8 shadow-elevated w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-foreground/5 mb-4 shadow-sm">
               <span className="text-3xl">🔒</span>
             </div>
-            <h1 className="text-xl font-extrabold text-foreground">Painel Admin</h1>
+            <h1 className="font-display text-xl font-bold text-foreground">Painel Admin</h1>
             <p className="text-xs text-muted-foreground mt-1.5">Acesso restrito ao administrador</p>
           </div>
           <div className="space-y-3">
@@ -331,7 +331,7 @@ const Admin = () => {
     <div className="min-h-screen bg-background pb-8">
       {/* Header */}
       <header className="relative overflow-hidden px-4 py-8 text-center text-primary-foreground"
-        style={{ background: "linear-gradient(145deg, hsl(220 15% 13%), hsl(220 12% 20%), hsl(220 10% 26%))" }}
+        style={{ background: "var(--gradient-hero)" }}
       >
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: "radial-gradient(circle at 30% 70%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }}
@@ -343,7 +343,7 @@ const Admin = () => {
           <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-primary-foreground/10 backdrop-blur-sm mb-2">
             <span className="text-2xl">🔧</span>
           </div>
-          <h1 className="text-xl font-extrabold tracking-tight">Painel Admin</h1>
+          <h1 className="font-display text-xl font-bold tracking-tight">Painel Admin</h1>
           <p className="text-xs opacity-50 mt-1 font-medium">Gerencie sua pelada com facilidade</p>
         </div>
       </header>
@@ -356,7 +356,7 @@ const Admin = () => {
             { icon: "👥", value: `${jogadores.length}/${maxJogadores}`, label: "Jogadores", color: "" },
             { icon: "💰", value: `R$ ${saldo}`, label: "Saldo", color: saldo >= 0 ? "hsl(142 72% 29%)" : "hsl(0 84% 60%)" },
           ].map((item) => (
-            <div key={item.label} className="rounded-2xl border bg-card p-3.5 text-center shadow-sm transition-all duration-200 hover:shadow-md">
+            <div key={item.label} className="rounded-2xl border bg-card p-3.5 text-center shadow-card transition-all duration-200 hover:shadow-elevated">
               <div className="text-lg mb-1">{item.icon}</div>
               <div className="text-xs font-bold leading-tight tabular-nums" style={item.color ? { color: item.color } : undefined}>
                 {item.value}
@@ -367,14 +367,14 @@ const Admin = () => {
         </div>
 
         {/* Data da Pelada */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.03s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.03s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">📅</span>
               </div>
               <div>
-                <h2 className="text-sm font-bold text-foreground">Data da Pelada</h2>
+                <h2 className="font-display text-sm font-semibold text-foreground">Data da Pelada</h2>
                 <p className="text-xs text-muted-foreground">{dataPelada}</p>
               </div>
             </div>
@@ -398,14 +398,14 @@ const Admin = () => {
         </section>
 
         {/* Horário da Pelada */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.045s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.045s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">⏰</span>
               </div>
               <div>
-                <h2 className="text-sm font-bold text-foreground">Horário da Pelada</h2>
+                <h2 className="font-display text-sm font-semibold text-foreground">Horário da Pelada</h2>
                 <p className="text-xs text-muted-foreground">{horarioPelada}</p>
               </div>
             </div>
@@ -437,14 +437,14 @@ const Admin = () => {
 
 
         {/* Controle de Cadastro */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.06s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.06s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">📋</span>
               </div>
               <div>
-                <h2 className="text-sm font-bold text-foreground">Cadastro de Jogadores</h2>
+                <h2 className="font-display text-sm font-semibold text-foreground">Cadastro de Jogadores</h2>
                 <p className="text-xs text-muted-foreground">
                   {cadastroAberto ? "Aberto para inscrições" : "Fechado para inscrições"}
                 </p>
@@ -461,13 +461,13 @@ const Admin = () => {
         </section>
 
         {/* Configuração da Pelada */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.07s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.07s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">⚙️</span>
               </div>
-              <h2 className="text-sm font-bold text-foreground">Configuração da Pelada</h2>
+              <h2 className="font-display text-sm font-semibold text-foreground">Configuração da Pelada</h2>
             </div>
             <button
               onClick={() => {
@@ -557,13 +557,13 @@ const Admin = () => {
         </section>
 
         {/* Sorteio de Times */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
           <div className="flex items-center gap-2.5 mb-4">
             <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent/15">
               <span className="text-lg">🎲</span>
             </div>
             <div>
-              <h2 className="text-sm font-bold text-foreground">Sorteio de Times</h2>
+              <h2 className="font-display text-sm font-semibold text-foreground">Sorteio de Times</h2>
               <p className="text-[11px] text-muted-foreground">
                 {sorteio ? "Times publicados na página principal" : "Nenhum sorteio publicado"}
               </p>
@@ -648,13 +648,13 @@ const Admin = () => {
 
 
         {/* Caixa da Pelada */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.09s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.09s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent/15">
                 <span className="text-lg">🏦</span>
               </div>
-              <h2 className="text-sm font-bold text-foreground">Caixa da Pelada</h2>
+              <h2 className="font-display text-sm font-semibold text-foreground">Caixa da Pelada</h2>
             </div>
             <button
               onClick={() => {
@@ -725,14 +725,14 @@ const Admin = () => {
             </div>
           </div>
         )}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.12s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.12s", animationFillMode: "both" }}>
 
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">⚽</span>
               </div>
-              <h2 className="text-sm font-bold text-foreground">Jogadores</h2>
+              <h2 className="font-display text-sm font-semibold text-foreground">Jogadores</h2>
               <span className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary tabular-nums">
                 {jogadores.length}/{maxJogadores}
               </span>
@@ -824,12 +824,12 @@ const Admin = () => {
         </section>
 
         {/* Relatórios */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md" style={{ animationDelay: "0.15s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.15s", animationFillMode: "both" }}>
           <div className="flex items-center gap-2.5 mb-4">
             <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
               <span className="text-lg">📊</span>
             </div>
-            <h2 className="text-sm font-bold text-foreground">Relatórios</h2>
+            <h2 className="font-display text-sm font-semibold text-foreground">Relatórios</h2>
           </div>
 
           <div className="space-y-3">
