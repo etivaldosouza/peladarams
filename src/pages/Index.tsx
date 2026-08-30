@@ -584,7 +584,8 @@ const Index = () => {
             </div>
           )}
         </section>
-      </div>
+      </main>
+
 
       <footer className="mt-4 pb-8 text-center">
         <div className="mx-auto max-w-lg px-4">
