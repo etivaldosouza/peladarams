@@ -32,6 +32,8 @@ const Admin = () => {
   const [dataPelada, setDataPelada] = useState("A definir");
   const [horarioPelada, setHorarioPelada] = useState("20h");
   const [editingHorario, setEditingHorario] = useState(false);
+  const [editingLocal, setEditingLocal] = useState(false);
+
   const [tempHorario, setTempHorario] = useState("20h");
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [valorCampo, setValorCampo] = useState(110);
