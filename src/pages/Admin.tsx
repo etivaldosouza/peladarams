@@ -444,6 +444,9 @@ const Admin = () => {
               </button>
             </div>
           )}
+        </section>
+
+
 
         {/* Local da Pelada */}
         <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
