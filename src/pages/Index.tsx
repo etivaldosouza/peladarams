@@ -428,13 +428,13 @@ const Index = () => {
         </section>
 
         {/* Pix */}
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
           <div className="flex items-center gap-2.5 mb-4">
             <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent/15">
               <span className="text-lg">💰</span>
             </div>
             <div>
-              <h2 className="text-base font-bold text-foreground">Pagamento via Pix</h2>
+              <h2 className="font-display text-base font-semibold text-foreground">Pagamento via Pix</h2>
               <p className="text-xs text-muted-foreground">R$ {valorJogador},00 por jogador</p>
             </div>
           </div>
@@ -468,12 +468,12 @@ const Index = () => {
 
         {/* Times da Pelada */}
         {sorteio && (
-          <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
+          <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.08s", animationFillMode: "both" }}>
             <div className="flex items-center gap-2.5 mb-4">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">⚽</span>
               </div>
-              <h2 className="text-base font-bold text-foreground">Times da Pelada</h2>
+              <h2 className="font-display text-base font-semibold text-foreground">Times da Pelada</h2>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -532,13 +532,13 @@ const Index = () => {
 
         {/* Jogadores */}
 
-        <section className="animate-slide-up rounded-2xl border bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-300" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.1s", animationFillMode: "both" }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
                 <span className="text-lg">⚽</span>
               </div>
-              <h2 className="text-base font-bold text-foreground">Jogadores</h2>
+              <h2 className="font-display text-base font-semibold text-foreground">Jogadores</h2>
             </div>
             <span className="rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary tabular-nums">
               {jogadores.length}/{maxJogadores}
