@@ -246,7 +246,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Header */}
       <header
-        className="relative overflow-hidden px-4 pt-12 pb-24 text-primary-foreground"
+        className="relative overflow-hidden px-4 pt-12 pb-28 text-primary-foreground"
         style={{ background: "var(--gradient-hero)" }}
       >
         <div
@@ -324,7 +324,7 @@ const Index = () => {
       <main className="mx-auto -mt-16 max-w-lg space-y-4 px-4 pb-6 relative z-10">
         {/* Aviso de lista completa */}
         {vagasRestantes <= 0 && (
-          <div className="animate-scale-in flex items-start gap-3 rounded-3xl border border-destructive/20 bg-destructive/5 p-4">
+          <div className="animate-scale-in flex items-start gap-3 rounded-3xl border border-destructive/20 bg-card p-4 shadow-card">
             <span className="text-2xl leading-none">🚫</span>
             <div>
               <p className="font-display text-sm font-bold text-destructive">Lista completa!</p>
