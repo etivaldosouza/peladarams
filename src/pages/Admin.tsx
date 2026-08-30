@@ -433,7 +433,46 @@ const Admin = () => {
               </button>
             </div>
           )}
+
+        {/* Local da Pelada */}
+        <section className="animate-slide-up card-surface p-6 transition-shadow duration-300 hover:shadow-elevated" style={{ animationDelay: "0.05s", animationFillMode: "both" }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-primary/10">
+                <span className="text-lg">📍</span>
+              </div>
+              <div>
+                <h2 className="font-display text-sm font-semibold text-foreground">Local da Pelada</h2>
+                <p className="text-xs text-muted-foreground">{localPelada}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => { setTempLocal(localPelada); setEditingLocal(!editingLocal); }}
+              className="rounded-xl border px-4 py-2 text-xs font-semibold transition-all duration-200 hover:bg-muted active:scale-95"
+            >
+              ✏️ Editar
+            </button>
+          </div>
+          {editingLocal && (
+            <div className="mt-4 flex items-center gap-2 animate-scale-in">
+              <input
+                type="text"
+                value={tempLocal}
+                onChange={(e) => setTempLocal(e.target.value)}
+                placeholder="Ex: Campo do Bairro"
+                className="flex-1 rounded-xl border bg-background px-3 py-2.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50"
+              />
+              <button
+                onClick={saveLocal}
+                className="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow hover:brightness-110 active:scale-95"
+              >
+                💾 Salvar
+              </button>
+            </div>
+          )}
         </section>
+
+
 
 
         {/* Controle de Cadastro */}
