@@ -178,6 +178,15 @@ const Admin = () => {
     setEditingHorario(false);
   };
 
+  const saveLocal = async () => {
+    const novo = tempLocal.trim() || "A definir";
+    setLocalPelada(novo);
+    await callAdmin({ action: "set_config", chave: "local_pelada", valor: novo });
+    setEditingLocal(false);
+  };
+
+
+
   const saveValores = async () => {
     const vc = Number(tempValorCampo) || 110;
     const vj = Number(tempValorJogador) || 10;
