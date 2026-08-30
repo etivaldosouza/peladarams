@@ -62,9 +62,25 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.005em;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: "Sora", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 }
+
+.card-surface {
+  @apply rounded-3xl border bg-card;
+  box-shadow: var(--shadow-card);
+}
+
+.section-label {
+  @apply text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground;
+}
+
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
