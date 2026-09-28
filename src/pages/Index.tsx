@@ -29,6 +29,9 @@ interface Jogador {
 }
 
 const Index = () => {
+  const { user } = useAuth();
+  const { pelada, loading: peladaLoading } = usePelada();
+  const peladaId = pelada?.id;
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -44,6 +47,7 @@ const Index = () => {
   const [cadastroAberto, setCadastroAberto] = useState(true);
   const [meuJogador, setMeuJogador] = useState<Jogador | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const userId = user?.id;
 
 
   const getDispositivoId = useCallback(() => {
@@ -57,13 +61,11 @@ const Index = () => {
 
   const verificarInscricao = useCallback((players: Jogador[]) => {
     const dispositivoId = localStorage.getItem(STORAGE_KEY);
-    if (dispositivoId) {
-      const encontrado = players.find((j) => j.dispositivo_id === dispositivoId);
-      setMeuJogador(encontrado || null);
-    } else {
-      setMeuJogador(null);
-    }
-  }, []);
+    const encontrado = players.find(
+      (j) => (userId && j.user_id === userId) || (dispositivoId && j.dispositivo_id === dispositivoId)
+    );
+    setMeuJogador(encontrado || null);
+  }, [userId]);
 
   const aplicarConfig = useCallback((config: { chave: string; valor: string }[]) => {
     for (const c of config) {
@@ -77,49 +79,42 @@ const Index = () => {
     }
   }, []);
 
+  const loadJogadores = useCallback(async () => {
+    if (!peladaId) return;
+    const { data } = await supabase
+      .from("jogadores_public")
+      .select("*")
+      .eq("pelada_id", peladaId)
+      .order("criado_em", { ascending: true });
+    if (data) {
+      const typed = data as Jogador[];
+      setJogadores(typed);
+      verificarInscricao(typed);
+    }
+  }, [peladaId, verificarInscricao]);
+
+  const loadConfig = useCallback(async () => {
+    if (!peladaId) return;
+    const { data } = await supabase.from("pelada_config").select("*").eq("pelada_id", peladaId);
+    if (data) aplicarConfig(data);
+  }, [peladaId, aplicarConfig]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: players } = await supabase
-        .from("jogadores_public")
-        .select("*")
-        .order("criado_em", { ascending: true });
-      if (players) {
-        const typed = players as Jogador[];
-        setJogadores(typed);
-        verificarInscricao(typed);
-      }
-
-      const { data: config } = await supabase.from("pelada_config").select("*");
-      if (config) aplicarConfig(config);
-
-      setCarregando(false);
-    };
-    fetchData();
-  }, [verificarInscricao, aplicarConfig]);
+    if (peladaLoading) return;
+    if (!peladaId) { setCarregando(false); return; }
+    Promise.all([loadJogadores(), loadConfig()]).then(() => setCarregando(false));
+  }, [peladaId, peladaLoading, loadJogadores, loadConfig]);
 
   useEffect(() => {
+    if (!peladaId) return;
     const channel = supabase
-      .channel("public-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
-        supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
-          if (data) {
-            const typed = data as Jogador[];
-            setJogadores(typed);
-            verificarInscricao(typed);
-          }
-        });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
-        supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) aplicarConfig(data);
-        });
-      })
-
+      .channel(`public-changes-${peladaId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => { loadJogadores(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config", filter: `pelada_id=eq.${peladaId}` }, () => { loadConfig(); })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [verificarInscricao, aplicarConfig]);
+  }, [peladaId, loadJogadores, loadConfig]);
 
   const vagasRestantes = maxJogadores - jogadores.length;
   const porcentagemOcupada = (jogadores.length / maxJogadores) * 100;
