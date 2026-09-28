@@ -217,7 +217,16 @@ const Index = () => {
     return 0;
   });
 
-  if (carregando) {
+  if (!carregando && !peladaLoading && !pelada) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background px-4 text-center">
+        <p className="font-display text-lg font-bold text-foreground">Pelada não encontrada</p>
+        <Link to="/minhas-peladas" className="text-sm font-semibold text-primary">Ver minhas peladas</Link>
+      </div>
+    );
+  }
+
+  if (carregando || peladaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -376,6 +385,13 @@ const Index = () => {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+          ) : !user ? (
+            <Link
+              to={`/entrar?next=${encodeURIComponent(window.location.pathname)}`}
+              className="block w-full rounded-xl px-6 py-3 text-center text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110"
+            >
+              Entre na sua conta para se inscrever
+            </Link>
           ) : (
             <>
               <div className="space-y-2.5">
@@ -581,6 +597,7 @@ const Index = () => {
           <div className="rounded-2xl bg-muted/30 border px-5 py-3.5">
             <p className="text-xs text-muted-foreground">
               Feito por <strong className="font-semibold text-foreground">Etivaldo</strong> · Mantido por <strong className="font-semibold text-foreground">Display Tecnologia</strong>
+              {" · "}<Link to="/minhas-peladas" className="font-semibold text-primary underline-offset-2 hover:underline">{user ? "Minhas peladas" : "Entrar / Criar minha pelada"}</Link>
             </p>
           </div>
         </div>
