@@ -13,6 +13,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { parseSorteio, type Sorteio } from "@/lib/sorteio";
 import qrCodePix from "@/assets/qrcode-pix.jpg";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { usePelada } from "@/hooks/usePelada";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
 const WHATSAPP_NUMBER = "5598981986302";
@@ -26,6 +29,7 @@ interface Jogador {
   criado_em: string;
   dispositivo_id?: string | null;
   telefone?: string | null;
+  user_id?: string | null;
 }
 
 const Index = () => {
@@ -153,28 +157,22 @@ const Index = () => {
       return;
     }
 
-    const dispositivoId = getDispositivoId();
-
-    const { data: existing } = await supabase
-      .from("jogadores_public")
-      .select("id")
-      .eq("dispositivo_id", dispositivoId)
-      .maybeSingle();
-
-    if (existing) {
-      setMensagem({ tipo: "erro", texto: "Você já está inscrito nesta pelada!" });
+    if (!user || !peladaId) {
+      setMensagem({ tipo: "erro", texto: "Entre na sua conta para se inscrever." });
       return;
     }
 
+    const dispositivoId = getDispositivoId();
+
     const tempId = crypto.randomUUID();
-    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim };
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim, user_id: user.id };
     setJogadores((prev) => [...prev, novoJogador]);
     setMeuJogador(novoJogador);
     setNome("");
     setTelefone("");
     setErro("");
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim });
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim, pelada_id: peladaId, user_id: user.id });
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
       setMeuJogador(null);
@@ -187,8 +185,9 @@ const Index = () => {
       setMensagem({ tipo: "erro", texto: msg });
       return;
     }
+    supabase.from("pelada_members").insert({ pelada_id: peladaId, user_id: user.id, papel: "player" }).then(() => {});
     setMensagem({ tipo: "sucesso", texto: `Você está na lista como ${trimmed}! Sua inscrição será confirmada apenas após o pagamento. Não esqueça de enviar o comprovante do Pix via WhatsApp.` });
-  }, [nome, telefone, jogadores, meuJogador, maxJogadores, getDispositivoId]);
+  }, [nome, telefone, jogadores, meuJogador, maxJogadores, getDispositivoId, user, peladaId]);
 
   const sairDaLista = useCallback(async () => {
     if (!meuJogador) return;
@@ -198,16 +197,11 @@ const Index = () => {
     setJogadores((prev) => prev.filter((j) => j.id !== jogadorId));
     setMeuJogador(null);
 
-    const { error } = await supabase.rpc("delete_my_registration", { p_device_id: dispositivoId });
-    if (error) {
-      const { data } = await supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true });
-      if (data) {
-        const typed = data as Jogador[];
-        setJogadores(typed);
-        verificarInscricao(typed);
-      }
-    }
-  }, [meuJogador, verificarInscricao]);
+    const { error } = meuJogador.user_id
+      ? await supabase.from("jogadores").delete().eq("id", jogadorId)
+      : await supabase.rpc("delete_my_registration", { p_device_id: dispositivoId });
+    if (error) loadJogadores();
+  }, [meuJogador, loadJogadores]);
 
   const copyPix = async () => {
     await navigator.clipboard.writeText(PIX_KEY);
