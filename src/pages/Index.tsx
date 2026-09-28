@@ -13,6 +13,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { parseSorteio, type Sorteio } from "@/lib/sorteio";
 import qrCodePix from "@/assets/qrcode-pix.jpg";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { usePelada } from "@/hooks/usePelada";
 
 const PIX_KEY = "c760db6d-2bfe-4228-b2e4-8d35d99510d4";
 const WHATSAPP_NUMBER = "5598981986302";
@@ -26,9 +29,13 @@ interface Jogador {
   criado_em: string;
   dispositivo_id?: string | null;
   telefone?: string | null;
+  user_id?: string | null;
 }
 
 const Index = () => {
+  const { user } = useAuth();
+  const { pelada, loading: peladaLoading } = usePelada();
+  const peladaId = pelada?.id;
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -44,6 +51,7 @@ const Index = () => {
   const [cadastroAberto, setCadastroAberto] = useState(true);
   const [meuJogador, setMeuJogador] = useState<Jogador | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const userId = user?.id;
 
 
   const getDispositivoId = useCallback(() => {
@@ -57,13 +65,11 @@ const Index = () => {
 
   const verificarInscricao = useCallback((players: Jogador[]) => {
     const dispositivoId = localStorage.getItem(STORAGE_KEY);
-    if (dispositivoId) {
-      const encontrado = players.find((j) => j.dispositivo_id === dispositivoId);
-      setMeuJogador(encontrado || null);
-    } else {
-      setMeuJogador(null);
-    }
-  }, []);
+    const encontrado = players.find(
+      (j) => (userId && j.user_id === userId) || (dispositivoId && j.dispositivo_id === dispositivoId)
+    );
+    setMeuJogador(encontrado || null);
+  }, [userId]);
 
   const aplicarConfig = useCallback((config: { chave: string; valor: string }[]) => {
     for (const c of config) {
@@ -77,49 +83,42 @@ const Index = () => {
     }
   }, []);
 
+  const loadJogadores = useCallback(async () => {
+    if (!peladaId) return;
+    const { data } = await supabase
+      .from("jogadores_public")
+      .select("*")
+      .eq("pelada_id", peladaId)
+      .order("criado_em", { ascending: true });
+    if (data) {
+      const typed = data as Jogador[];
+      setJogadores(typed);
+      verificarInscricao(typed);
+    }
+  }, [peladaId, verificarInscricao]);
+
+  const loadConfig = useCallback(async () => {
+    if (!peladaId) return;
+    const { data } = await supabase.from("pelada_config").select("*").eq("pelada_id", peladaId);
+    if (data) aplicarConfig(data);
+  }, [peladaId, aplicarConfig]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: players } = await supabase
-        .from("jogadores_public")
-        .select("*")
-        .order("criado_em", { ascending: true });
-      if (players) {
-        const typed = players as Jogador[];
-        setJogadores(typed);
-        verificarInscricao(typed);
-      }
-
-      const { data: config } = await supabase.from("pelada_config").select("*");
-      if (config) aplicarConfig(config);
-
-      setCarregando(false);
-    };
-    fetchData();
-  }, [verificarInscricao, aplicarConfig]);
+    if (peladaLoading) return;
+    if (!peladaId) { setCarregando(false); return; }
+    Promise.all([loadJogadores(), loadConfig()]).then(() => setCarregando(false));
+  }, [peladaId, peladaLoading, loadJogadores, loadConfig]);
 
   useEffect(() => {
+    if (!peladaId) return;
     const channel = supabase
-      .channel("public-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
-        supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true }).then(({ data }) => {
-          if (data) {
-            const typed = data as Jogador[];
-            setJogadores(typed);
-            verificarInscricao(typed);
-          }
-        });
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
-        supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) aplicarConfig(data);
-        });
-      })
-
+      .channel(`public-changes-${peladaId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => { loadJogadores(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config", filter: `pelada_id=eq.${peladaId}` }, () => { loadConfig(); })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [verificarInscricao, aplicarConfig]);
+  }, [peladaId, loadJogadores, loadConfig]);
 
   const vagasRestantes = maxJogadores - jogadores.length;
   const porcentagemOcupada = (jogadores.length / maxJogadores) * 100;
@@ -158,28 +157,22 @@ const Index = () => {
       return;
     }
 
-    const dispositivoId = getDispositivoId();
-
-    const { data: existing } = await supabase
-      .from("jogadores_public")
-      .select("id")
-      .eq("dispositivo_id", dispositivoId)
-      .maybeSingle();
-
-    if (existing) {
-      setMensagem({ tipo: "erro", texto: "Você já está inscrito nesta pelada!" });
+    if (!user || !peladaId) {
+      setMensagem({ tipo: "erro", texto: "Entre na sua conta para se inscrever." });
       return;
     }
 
+    const dispositivoId = getDispositivoId();
+
     const tempId = crypto.randomUUID();
-    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim };
+    const novoJogador: Jogador = { id: tempId, nome: trimmed, status: "pendente", criado_em: new Date().toISOString(), dispositivo_id: dispositivoId, telefone: telefoneTrim, user_id: user.id };
     setJogadores((prev) => [...prev, novoJogador]);
     setMeuJogador(novoJogador);
     setNome("");
     setTelefone("");
     setErro("");
 
-    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim });
+    const { error } = await supabase.from("jogadores").insert({ nome: trimmed, dispositivo_id: dispositivoId, telefone: telefoneTrim, pelada_id: peladaId, user_id: user.id });
     if (error) {
       setJogadores((prev) => prev.filter((j) => j.id !== tempId));
       setMeuJogador(null);
@@ -192,8 +185,9 @@ const Index = () => {
       setMensagem({ tipo: "erro", texto: msg });
       return;
     }
+    supabase.from("pelada_members").insert({ pelada_id: peladaId, user_id: user.id, papel: "player" }).then(() => {});
     setMensagem({ tipo: "sucesso", texto: `Você está na lista como ${trimmed}! Sua inscrição será confirmada apenas após o pagamento. Não esqueça de enviar o comprovante do Pix via WhatsApp.` });
-  }, [nome, telefone, jogadores, meuJogador, maxJogadores, getDispositivoId]);
+  }, [nome, telefone, jogadores, meuJogador, maxJogadores, getDispositivoId, user, peladaId]);
 
   const sairDaLista = useCallback(async () => {
     if (!meuJogador) return;
@@ -203,16 +197,11 @@ const Index = () => {
     setJogadores((prev) => prev.filter((j) => j.id !== jogadorId));
     setMeuJogador(null);
 
-    const { error } = await supabase.rpc("delete_my_registration", { p_device_id: dispositivoId });
-    if (error) {
-      const { data } = await supabase.from("jogadores_public").select("*").order("criado_em", { ascending: true });
-      if (data) {
-        const typed = data as Jogador[];
-        setJogadores(typed);
-        verificarInscricao(typed);
-      }
-    }
-  }, [meuJogador, verificarInscricao]);
+    const { error } = meuJogador.user_id
+      ? await supabase.from("jogadores").delete().eq("id", jogadorId)
+      : await supabase.rpc("delete_my_registration", { p_device_id: dispositivoId });
+    if (error) loadJogadores();
+  }, [meuJogador, loadJogadores]);
 
   const copyPix = async () => {
     await navigator.clipboard.writeText(PIX_KEY);
@@ -228,7 +217,16 @@ const Index = () => {
     return 0;
   });
 
-  if (carregando) {
+  if (!carregando && !peladaLoading && !pelada) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background px-4 text-center">
+        <p className="font-display text-lg font-bold text-foreground">Pelada não encontrada</p>
+        <Link to="/minhas-peladas" className="text-sm font-semibold text-primary">Ver minhas peladas</Link>
+      </div>
+    );
+  }
+
+  if (carregando || peladaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -387,6 +385,13 @@ const Index = () => {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
+          ) : !user ? (
+            <Link
+              to={`/entrar?next=${encodeURIComponent(window.location.pathname)}`}
+              className="block w-full rounded-xl px-6 py-3 text-center text-sm font-bold text-primary-foreground bg-primary shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110"
+            >
+              Entre na sua conta para se inscrever
+            </Link>
           ) : (
             <>
               <div className="space-y-2.5">
@@ -592,6 +597,7 @@ const Index = () => {
           <div className="rounded-2xl bg-muted/30 border px-5 py-3.5">
             <p className="text-xs text-muted-foreground">
               Feito por <strong className="font-semibold text-foreground">Etivaldo</strong> · Mantido por <strong className="font-semibold text-foreground">Display Tecnologia</strong>
+              {" · "}<Link to="/minhas-peladas" className="font-semibold text-primary underline-offset-2 hover:underline">{user ? "Minhas peladas" : "Entrar / Criar minha pelada"}</Link>
             </p>
           </div>
         </div>
