@@ -14,48 +14,360 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          created_at: string
+          id: string
+          jogador_id: string
+          match_id: string
+          presente: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          jogador_id: string
+          match_id: string
+          presente?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          jogador_id?: string
+          match_id?: string
+          presente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_jogador_id_fkey"
+            columns: ["jogador_id"]
+            isOneToOne: false
+            referencedRelation: "jogadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_jogador_id_fkey"
+            columns: ["jogador_id"]
+            isOneToOne: false
+            referencedRelation: "jogadores_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jogadores: {
         Row: {
           criado_em: string
           dispositivo_id: string | null
           id: string
           nome: string
+          pelada_id: string
           status: string
           telefone: string | null
+          user_id: string | null
         }
         Insert: {
           criado_em?: string
           dispositivo_id?: string | null
           id?: string
           nome: string
+          pelada_id?: string
           status?: string
           telefone?: string | null
+          user_id?: string | null
         }
         Update: {
           criado_em?: string
           dispositivo_id?: string | null
           id?: string
           nome?: string
+          pelada_id?: string
           status?: string
           telefone?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "jogadores_pelada_id_fkey"
+            columns: ["pelada_id"]
+            isOneToOne: false
+            referencedRelation: "peladas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_players: {
+        Row: {
+          assistencias: number
+          created_at: string
+          gols: number
+          id: string
+          jogador_id: string
+          match_id: string
+          time: string | null
+        }
+        Insert: {
+          assistencias?: number
+          created_at?: string
+          gols?: number
+          id?: string
+          jogador_id: string
+          match_id: string
+          time?: string | null
+        }
+        Update: {
+          assistencias?: number
+          created_at?: string
+          gols?: number
+          id?: string
+          jogador_id?: string
+          match_id?: string
+          time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_players_jogador_id_fkey"
+            columns: ["jogador_id"]
+            isOneToOne: false
+            referencedRelation: "jogadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_players_jogador_id_fkey"
+            columns: ["jogador_id"]
+            isOneToOne: false
+            referencedRelation: "jogadores_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_players_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          created_at: string
+          data: string | null
+          id: string
+          local: string | null
+          pelada_id: string
+          sorteio: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string | null
+          id?: string
+          local?: string | null
+          pelada_id: string
+          sorteio?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string | null
+          id?: string
+          local?: string | null
+          pelada_id?: string
+          sorteio?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_pelada_id_fkey"
+            columns: ["pelada_id"]
+            isOneToOne: false
+            referencedRelation: "peladas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          created_at: string
+          id: string
+          jogador_id: string
+          match_id: string | null
+          pago_em: string
+          pelada_id: string
+          status: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          jogador_id: string
+          match_id?: string | null
+          pago_em?: string
+          pelada_id: string
+          status?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          jogador_id?: string
+          match_id?: string | null
+          pago_em?: string
+          pelada_id?: string
+          status?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_jogador_id_fkey"
+            columns: ["jogador_id"]
+            isOneToOne: false
+            referencedRelation: "jogadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_jogador_id_fkey"
+            columns: ["jogador_id"]
+            isOneToOne: false
+            referencedRelation: "jogadores_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_pelada_id_fkey"
+            columns: ["pelada_id"]
+            isOneToOne: false
+            referencedRelation: "peladas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pelada_config: {
         Row: {
           chave: string
           id: string
+          pelada_id: string
           valor: string
         }
         Insert: {
           chave: string
           id?: string
+          pelada_id?: string
           valor: string
         }
         Update: {
           chave?: string
           id?: string
+          pelada_id?: string
           valor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pelada_config_pelada_id_fkey"
+            columns: ["pelada_id"]
+            isOneToOne: false
+            referencedRelation: "peladas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pelada_members: {
+        Row: {
+          created_at: string
+          id: string
+          papel: string
+          pelada_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          papel?: string
+          pelada_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          papel?: string
+          pelada_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pelada_members_pelada_id_fkey"
+            columns: ["pelada_id"]
+            isOneToOne: false
+            referencedRelation: "peladas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      peladas: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          owner_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          owner_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          owner_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          nome: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -67,30 +379,55 @@ export type Database = {
           dispositivo_id: string | null
           id: string | null
           nome: string | null
+          pelada_id: string | null
           status: string | null
+          user_id: string | null
         }
         Insert: {
           criado_em?: string | null
           dispositivo_id?: string | null
           id?: string | null
           nome?: string | null
+          pelada_id?: string | null
           status?: string | null
+          user_id?: string | null
         }
         Update: {
           criado_em?: string | null
           dispositivo_id?: string | null
           id?: string | null
           nome?: string | null
+          pelada_id?: string | null
           status?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "jogadores_pelada_id_fkey"
+            columns: ["pelada_id"]
+            isOneToOne: false
+            referencedRelation: "peladas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
+      claim_legacy_pelada: { Args: { _user: string }; Returns: undefined }
       delete_my_registration: {
         Args: { p_device_id: string }
         Returns: undefined
       }
+      is_my_jogador: { Args: { _jogador: string }; Returns: boolean }
+      is_pelada_member: {
+        Args: { _pelada: string; _user: string }
+        Returns: boolean
+      }
+      is_pelada_owner: {
+        Args: { _pelada: string; _user: string }
+        Returns: boolean
+      }
+      match_pelada: { Args: { _match: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
