@@ -338,7 +338,12 @@ const Admin = () => {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
   };
 
+  if (authLoading || peladaLoading || (user && checkingOwner)) {
+    return <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">Carregando...</div>;
+  }
+
   if (!isAuthenticated) {
+    const podeReivindicar = !!user && !!pelada && !pelada.owner_id;
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="animate-scale-in rounded-3xl border bg-card p-8 shadow-elevated w-full max-w-sm">
@@ -347,27 +352,36 @@ const Admin = () => {
               <span className="text-3xl">🔒</span>
             </div>
             <h1 className="font-display text-xl font-bold text-foreground">Painel Admin</h1>
-            <p className="text-xs text-muted-foreground mt-1.5">Acesso restrito ao administrador</p>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {!pelada ? "Pelada não encontrada" : !user ? "Entre com a conta do organizador" : podeReivindicar ? "Primeiro acesso: digite a senha antiga de admin para vincular esta pelada à sua conta" : "Sua conta não é organizadora desta pelada"}
+            </p>
           </div>
-          <div className="space-y-3">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && password) tryLogin(password); }}
-              placeholder="Digite a senha..."
-              className="w-full rounded-xl border bg-background px-4 py-3.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
-            />
-            {loginError && (
-              <p className="text-xs font-medium text-destructive">{loginError}</p>
-            )}
-            <button
-              onClick={() => password && tryLogin(password)}
-              className="w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
-            >
+          {!user ? (
+            <Link to={`/entrar?next=${encodeURIComponent(window.location.pathname)}`}
+              className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-sm font-bold text-primary-foreground">
               Entrar
-            </button>
-          </div>
+            </Link>
+          ) : podeReivindicar ? (
+            <div className="space-y-3">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && password) tryLogin(password); }}
+                placeholder="Senha antiga de admin..."
+                className="w-full rounded-xl border bg-background px-4 py-3.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
+              />
+              {loginError && <p className="text-xs font-medium text-destructive">{loginError}</p>}
+              <button
+                onClick={() => password && tryLogin(password)}
+                className="w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
+              >
+                Vincular e entrar
+              </button>
+            </div>
+          ) : (
+            <Link to="/minhas-peladas" className="block text-center text-sm font-semibold text-primary">Ver minhas peladas</Link>
+          )}
         </div>
       </div>
     );
