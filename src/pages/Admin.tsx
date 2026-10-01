@@ -5,6 +5,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { usePelada } from "@/hooks/usePelada";
 import {
   gerarSorteio,
   parseSorteio,
@@ -12,8 +15,6 @@ import {
   validarSorteio,
   type Sorteio,
 } from "@/lib/sorteio";
-
-const ADMIN_PW_KEY = "admin_pw";
 
 interface Jogador {
   id: string;
@@ -24,9 +25,21 @@ interface Jogador {
 }
 
 const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const { pelada, loading: peladaLoading, refresh: refreshPelada } = usePelada();
+  const peladaId = pelada?.id;
+  const [isOwner, setIsOwner] = useState(false);
+  const [checkingOwner, setCheckingOwner] = useState(true);
+  useEffect(() => {
+    if (!user || !peladaId) { setIsOwner(false); setCheckingOwner(false); return; }
+    setCheckingOwner(true);
+    supabase.rpc("is_pelada_owner", { _pelada: peladaId, _user: user.id }).then(({ data }) => {
+      setIsOwner(!!data);
+      setCheckingOwner(false);
+    });
+  }, [user, peladaId, pelada?.owner_id]);
+  const isAuthenticated = !!user && isOwner;
   const [password, setPassword] = useState("");
-  const [adminPw, setAdminPw] = useState<string>(() => sessionStorage.getItem(ADMIN_PW_KEY) || "");
   const [loginError, setLoginError] = useState("");
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [dataPelada, setDataPelada] = useState("A definir");
@@ -55,13 +68,45 @@ const Admin = () => {
   const [sorteioErro, setSorteioErro] = useState("");
 
 
-  const callAdmin = async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke("admin-api", {
-      body,
-      headers: { "x-admin-password": adminPw },
-    });
-    if (error) throw error;
-    return data as { error?: string } & Record<string, unknown>;
+  const callAdmin = async (body: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    if (!peladaId) throw new Error("Pelada não carregada");
+    switch (body.action) {
+      case "list_jogadores": {
+        const { data, error } = await supabase
+          .from("jogadores")
+          .select("id, nome, status, criado_em, telefone, dispositivo_id")
+          .eq("pelada_id", peladaId)
+          .order("criado_em", { ascending: true });
+        if (error) throw error;
+        return { jogadores: data };
+      }
+      case "set_status": {
+        const { error } = await supabase.from("jogadores").update({ status: body.status as string }).eq("id", body.id as string).eq("pelada_id", peladaId);
+        if (error) throw error;
+        if (body.status === "pago") {
+          await supabase.from("payments").insert({ pelada_id: peladaId, jogador_id: body.id as string, valor: valorJogador, status: "pago" });
+        }
+        return { ok: true };
+      }
+      case "remove_player": {
+        const { error } = await supabase.from("jogadores").delete().eq("id", body.id as string).eq("pelada_id", peladaId);
+        if (error) throw error;
+        return { ok: true };
+      }
+      case "clear_all": {
+        const { error } = await supabase.from("jogadores").delete().eq("pelada_id", peladaId);
+        if (error) throw error;
+        return { ok: true };
+      }
+      case "set_config": {
+        const { error } = await supabase
+          .from("pelada_config")
+          .upsert({ pelada_id: peladaId, chave: body.chave as string, valor: body.valor as string }, { onConflict: "pelada_id,chave" });
+        if (error) throw error;
+        return { ok: true };
+      }
+    }
+    return {};
   };
 
   const refreshJogadores = async () => {
@@ -92,50 +137,40 @@ const Admin = () => {
     }
   };
 
+  const loadConfig = () =>
+    supabase.from("pelada_config").select("*").eq("pelada_id", peladaId!).then(({ data }) => { if (data) applyConfig(data); });
+
   useEffect(() => {
-    if (!isAuthenticated) return;
-    const fetchData = async () => {
-      await refreshJogadores();
-      const { data: config } = await supabase.from("pelada_config").select("*");
-      if (config) applyConfig(config);
-    };
-    fetchData();
+    if (!isAuthenticated || !peladaId) return;
+    refreshJogadores();
+    loadConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, peladaId]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !peladaId) return;
     const channel = supabase
-      .channel("admin-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
-        refreshJogadores();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
-        supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) applyConfig(data);
-        });
-      })
+      .channel(`admin-changes-${peladaId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores", filter: `pelada_id=eq.${peladaId}` }, () => { refreshJogadores(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config", filter: `pelada_id=eq.${peladaId}` }, () => { loadConfig(); })
       .subscribe();
-
-
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, peladaId]);
 
+  // Vincula a pelada antiga (sem dono) à conta usando a senha antiga de admin
   const tryLogin = async (pw: string) => {
     setLoginError("");
     try {
       const { data, error } = await supabase.functions.invoke("admin-api", {
-        body: { action: "login" },
+        body: { action: "claim" },
         headers: { "x-admin-password": pw },
       });
       if (error || (data as { error?: string })?.error) {
         setLoginError("Senha incorreta.");
         return;
       }
-      setAdminPw(pw);
-      sessionStorage.setItem(ADMIN_PW_KEY, pw);
-      setIsAuthenticated(true);
+      refreshPelada();
     } catch {
       setLoginError("Erro ao autenticar. Tente novamente.");
     }
@@ -303,7 +338,12 @@ const Admin = () => {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`, "_blank");
   };
 
+  if (authLoading || peladaLoading || (user && checkingOwner)) {
+    return <div className="min-h-screen flex items-center justify-center bg-background text-sm text-muted-foreground">Carregando...</div>;
+  }
+
   if (!isAuthenticated) {
+    const podeReivindicar = !!user && !!pelada && !pelada.owner_id;
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="animate-scale-in rounded-3xl border bg-card p-8 shadow-elevated w-full max-w-sm">
@@ -312,27 +352,36 @@ const Admin = () => {
               <span className="text-3xl">🔒</span>
             </div>
             <h1 className="font-display text-xl font-bold text-foreground">Painel Admin</h1>
-            <p className="text-xs text-muted-foreground mt-1.5">Acesso restrito ao administrador</p>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {!pelada ? "Pelada não encontrada" : !user ? "Entre com a conta do organizador" : podeReivindicar ? "Primeiro acesso: digite a senha antiga de admin para vincular esta pelada à sua conta" : "Sua conta não é organizadora desta pelada"}
+            </p>
           </div>
-          <div className="space-y-3">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && password) tryLogin(password); }}
-              placeholder="Digite a senha..."
-              className="w-full rounded-xl border bg-background px-4 py-3.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
-            />
-            {loginError && (
-              <p className="text-xs font-medium text-destructive">{loginError}</p>
-            )}
-            <button
-              onClick={() => password && tryLogin(password)}
-              className="w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
-            >
+          {!user ? (
+            <Link to={`/entrar?next=${encodeURIComponent(window.location.pathname)}`}
+              className="block w-full rounded-xl bg-primary px-4 py-3.5 text-center text-sm font-bold text-primary-foreground">
               Entrar
-            </button>
-          </div>
+            </Link>
+          ) : podeReivindicar ? (
+            <div className="space-y-3">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && password) tryLogin(password); }}
+                placeholder="Senha antiga de admin..."
+                className="w-full rounded-xl border bg-background px-4 py-3.5 text-sm outline-none transition-all duration-200 focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60"
+              />
+              {loginError && <p className="text-xs font-medium text-destructive">{loginError}</p>}
+              <button
+                onClick={() => password && tryLogin(password)}
+                className="w-full rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-sm transition-all duration-200 hover:shadow-md hover:brightness-110 active:scale-[0.98]"
+              >
+                Vincular e entrar
+              </button>
+            </div>
+          ) : (
+            <Link to="/minhas-peladas" className="block text-center text-sm font-semibold text-primary">Ver minhas peladas</Link>
+          )}
         </div>
       </div>
     );

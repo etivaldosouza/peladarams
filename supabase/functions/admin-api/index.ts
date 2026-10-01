@@ -1,5 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
+// Used only to link the legacy "Pelada da Semana" to the signed-in organizer
+// account, validated with the old ADMIN_PASSWORD.
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -10,46 +12,11 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ADMIN_PASSWORD = Deno.env.get("ADMIN_PASSWORD") ?? "";
-
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-const CONFIG_KEYS = new Set([
-  "data_pelada",
-  "horario_pelada",
-  "local_pelada",
-  "valor_campo",
-  "valor_jogador",
-  "cadastro_aberto",
-  "max_jogadores",
-  "qtd_times",
-  "goleiros_fixos",
-  "sorteio_atual",
-]);
-
-const MAX_VALUE_LENGTH: Record<string, number> = {
-  sorteio_atual: 20000,
-  goleiros_fixos: 1000,
-};
-
-
-type Action =
-  | { action: "login" }
-  | { action: "list_jogadores" }
-  | { action: "set_status"; id: string; status: "pago" | "pendente" }
-  | { action: "remove_player"; id: string }
-  | { action: "clear_all" }
-  | { action: "set_config"; chave: string; valor: string };
-
-function bad(status: number, message: string) {
-  return new Response(JSON.stringify({ error: message }), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
-
-function ok(data: unknown) {
+function json(status: number, data: unknown) {
   return new Response(JSON.stringify(data), {
-    status: 200,
+    status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
@@ -58,7 +25,6 @@ function checkPassword(req: Request): boolean {
   if (!ADMIN_PASSWORD) return false;
   const pw = req.headers.get("x-admin-password") ?? "";
   if (pw.length !== ADMIN_PASSWORD.length) return false;
-  // constant-time comparison
   let diff = 0;
   for (let i = 0; i < pw.length; i++) diff |= pw.charCodeAt(i) ^ ADMIN_PASSWORD.charCodeAt(i);
   return diff === 0;
@@ -66,76 +32,18 @@ function checkPassword(req: Request): boolean {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return bad(405, "Method not allowed");
+  if (req.method !== "POST") return json(405, { error: "Method not allowed" });
+  if (!checkPassword(req)) return json(401, { error: "Unauthorized" });
 
-  if (!checkPassword(req)) return bad(401, "Unauthorized");
+  const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  if (userErr || !userData?.user) return json(401, { error: "Login required" });
 
-  let body: Action;
-  try {
-    body = (await req.json()) as Action;
-  } catch {
-    return bad(400, "Invalid JSON");
-  }
+  let body: { action?: string } = {};
+  try { body = await req.json(); } catch { /* empty */ }
+  if (body.action !== "claim") return json(400, { error: "Unknown action" });
 
-  try {
-    switch (body.action) {
-      case "login":
-        return ok({ ok: true });
-
-      case "list_jogadores": {
-        const { data, error } = await admin
-          .from("jogadores")
-          .select("id, nome, status, criado_em, telefone, dispositivo_id")
-          .order("criado_em", { ascending: true });
-        if (error) throw error;
-        return ok({ jogadores: data });
-      }
-
-      case "set_status": {
-        if (!body.id || (body.status !== "pago" && body.status !== "pendente"))
-          return bad(400, "Invalid params");
-        const { error } = await admin
-          .from("jogadores")
-          .update({ status: body.status })
-          .eq("id", body.id);
-        if (error) throw error;
-        return ok({ ok: true });
-      }
-
-      case "remove_player": {
-        if (!body.id) return bad(400, "Invalid params");
-        const { error } = await admin.from("jogadores").delete().eq("id", body.id);
-        if (error) throw error;
-        return ok({ ok: true });
-      }
-
-      case "clear_all": {
-        const { error } = await admin
-          .from("jogadores")
-          .delete()
-          .not("id", "is", null);
-        if (error) throw error;
-        return ok({ ok: true });
-      }
-
-      case "set_config": {
-        if (!CONFIG_KEYS.has(body.chave)) return bad(400, "Invalid config key");
-        const maxLen = MAX_VALUE_LENGTH[body.chave] ?? 200;
-        if (typeof body.valor !== "string" || body.valor.length > maxLen)
-          return bad(400, "Invalid value");
-
-        const { error } = await admin
-          .from("pelada_config")
-          .upsert({ chave: body.chave, valor: body.valor }, { onConflict: "chave" });
-        if (error) throw error;
-        return ok({ ok: true });
-      }
-
-      default:
-        return bad(400, "Unknown action");
-    }
-  } catch (e) {
-    console.error("admin-api error", e);
-    return bad(500, (e as Error).message ?? "Server error");
-  }
+  const { error } = await admin.rpc("claim_legacy_pelada", { _user: userData.user.id });
+  if (error) return json(500, { error: error.message });
+  return json(200, { ok: true });
 });
