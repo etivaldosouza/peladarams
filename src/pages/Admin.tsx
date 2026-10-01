@@ -5,6 +5,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { usePelada } from "@/hooks/usePelada";
 import {
   gerarSorteio,
   parseSorteio,
@@ -12,8 +15,6 @@ import {
   validarSorteio,
   type Sorteio,
 } from "@/lib/sorteio";
-
-const ADMIN_PW_KEY = "admin_pw";
 
 interface Jogador {
   id: string;
@@ -24,9 +25,21 @@ interface Jogador {
 }
 
 const Admin = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const { pelada, loading: peladaLoading, refresh: refreshPelada } = usePelada();
+  const peladaId = pelada?.id;
+  const [isOwner, setIsOwner] = useState(false);
+  const [checkingOwner, setCheckingOwner] = useState(true);
+  useEffect(() => {
+    if (!user || !peladaId) { setIsOwner(false); setCheckingOwner(false); return; }
+    setCheckingOwner(true);
+    supabase.rpc("is_pelada_owner", { _pelada: peladaId, _user: user.id }).then(({ data }) => {
+      setIsOwner(!!data);
+      setCheckingOwner(false);
+    });
+  }, [user, peladaId, pelada?.owner_id]);
+  const isAuthenticated = !!user && isOwner;
   const [password, setPassword] = useState("");
-  const [adminPw, setAdminPw] = useState<string>(() => sessionStorage.getItem(ADMIN_PW_KEY) || "");
   const [loginError, setLoginError] = useState("");
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
   const [dataPelada, setDataPelada] = useState("A definir");
@@ -55,13 +68,45 @@ const Admin = () => {
   const [sorteioErro, setSorteioErro] = useState("");
 
 
-  const callAdmin = async (body: Record<string, unknown>) => {
-    const { data, error } = await supabase.functions.invoke("admin-api", {
-      body,
-      headers: { "x-admin-password": adminPw },
-    });
-    if (error) throw error;
-    return data as { error?: string } & Record<string, unknown>;
+  const callAdmin = async (body: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    if (!peladaId) throw new Error("Pelada não carregada");
+    switch (body.action) {
+      case "list_jogadores": {
+        const { data, error } = await supabase
+          .from("jogadores")
+          .select("id, nome, status, criado_em, telefone, dispositivo_id")
+          .eq("pelada_id", peladaId)
+          .order("criado_em", { ascending: true });
+        if (error) throw error;
+        return { jogadores: data };
+      }
+      case "set_status": {
+        const { error } = await supabase.from("jogadores").update({ status: body.status as string }).eq("id", body.id as string).eq("pelada_id", peladaId);
+        if (error) throw error;
+        if (body.status === "pago") {
+          await supabase.from("payments").insert({ pelada_id: peladaId, jogador_id: body.id as string, valor: valorJogador, status: "pago" });
+        }
+        return { ok: true };
+      }
+      case "remove_player": {
+        const { error } = await supabase.from("jogadores").delete().eq("id", body.id as string).eq("pelada_id", peladaId);
+        if (error) throw error;
+        return { ok: true };
+      }
+      case "clear_all": {
+        const { error } = await supabase.from("jogadores").delete().eq("pelada_id", peladaId);
+        if (error) throw error;
+        return { ok: true };
+      }
+      case "set_config": {
+        const { error } = await supabase
+          .from("pelada_config")
+          .upsert({ pelada_id: peladaId, chave: body.chave as string, valor: body.valor as string }, { onConflict: "pelada_id,chave" });
+        if (error) throw error;
+        return { ok: true };
+      }
+    }
+    return {};
   };
 
   const refreshJogadores = async () => {
@@ -92,50 +137,40 @@ const Admin = () => {
     }
   };
 
+  const loadConfig = () =>
+    supabase.from("pelada_config").select("*").eq("pelada_id", peladaId!).then(({ data }) => { if (data) applyConfig(data); });
+
   useEffect(() => {
-    if (!isAuthenticated) return;
-    const fetchData = async () => {
-      await refreshJogadores();
-      const { data: config } = await supabase.from("pelada_config").select("*");
-      if (config) applyConfig(config);
-    };
-    fetchData();
+    if (!isAuthenticated || !peladaId) return;
+    refreshJogadores();
+    loadConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, peladaId]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !peladaId) return;
     const channel = supabase
-      .channel("admin-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores" }, () => {
-        refreshJogadores();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config" }, () => {
-        supabase.from("pelada_config").select("*").then(({ data }) => {
-          if (data) applyConfig(data);
-        });
-      })
+      .channel(`admin-changes-${peladaId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "jogadores", filter: `pelada_id=eq.${peladaId}` }, () => { refreshJogadores(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "pelada_config", filter: `pelada_id=eq.${peladaId}` }, () => { loadConfig(); })
       .subscribe();
-
-
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, peladaId]);
 
+  // Vincula a pelada antiga (sem dono) à conta usando a senha antiga de admin
   const tryLogin = async (pw: string) => {
     setLoginError("");
     try {
       const { data, error } = await supabase.functions.invoke("admin-api", {
-        body: { action: "login" },
+        body: { action: "claim" },
         headers: { "x-admin-password": pw },
       });
       if (error || (data as { error?: string })?.error) {
         setLoginError("Senha incorreta.");
         return;
       }
-      setAdminPw(pw);
-      sessionStorage.setItem(ADMIN_PW_KEY, pw);
-      setIsAuthenticated(true);
+      refreshPelada();
     } catch {
       setLoginError("Erro ao autenticar. Tente novamente.");
     }
