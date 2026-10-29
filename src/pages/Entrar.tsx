@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
+import { safeAuthDestination } from "@/lib/authDestination";
+import { Button } from "@/components/ui/button";
 
 const inputCls =
   "w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-ring/50 focus:border-primary placeholder:text-muted-foreground/60";
@@ -12,7 +14,7 @@ const btnCls =
 const Entrar = () => {
   const [params] = useSearchParams();
   const next = params.get("next");
-  const destino = next && next.startsWith("/") ? next : "/minhas-peladas";
+  const [destino] = useState(() => safeAuthDestination(next ?? sessionStorage.getItem("auth_next")));
   const navigate = useNavigate();
   const { user } = useAuth();
   const [modo, setModo] = useState<"entrar" | "criar" | "esqueci">("entrar");
@@ -24,14 +26,25 @@ const Entrar = () => {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (user) navigate(destino, { replace: true });
+    if (user) {
+      sessionStorage.removeItem("auth_next");
+      navigate(destino, { replace: true });
+    }
   }, [user, destino, navigate]);
 
   const google = async () => {
     setErro("");
+    setBusy(true);
     sessionStorage.setItem("auth_next", destino);
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/entrar" });
-    if (r.error) setErro("Não foi possível entrar com Google.");
+    try {
+      const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/entrar" });
+      if (r.error) setErro("Não foi possível entrar com Google. Tente novamente.");
+      if (r.redirected) return;
+    } catch {
+      setErro("Não foi possível entrar com Google. Tente novamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const enviar = async () => {
@@ -69,9 +82,9 @@ const Entrar = () => {
 
         {modo !== "esqueci" && (
           <>
-            <button onClick={google} className="w-full rounded-xl border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-all hover:bg-muted">
+            <Button variant="outline" onClick={google} disabled={busy} className="h-auto w-full rounded-xl px-4 py-3 text-sm font-semibold">
               Continuar com Google
-            </button>
+            </Button>
             <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-border" />ou<div className="h-px flex-1 bg-border" />
             </div>

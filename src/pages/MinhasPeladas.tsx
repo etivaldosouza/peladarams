@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 
 interface Item { id: string; nome: string; slug: string; owner_id: string | null; papel: string }
 
@@ -10,6 +11,7 @@ const slugify = (s: string) =>
 
 const MinhasPeladas = () => {
   const { user, loading } = useAuth();
+  const { isAdmin, loading: adminLoading } = usePlatformAdmin(user?.id);
   const navigate = useNavigate();
   const [itens, setItens] = useState<Item[]>([]);
   const [nome, setNome] = useState("");
@@ -35,7 +37,7 @@ const MinhasPeladas = () => {
   useEffect(() => { carregar(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user]);
 
   const criar = async () => {
-    if (!user) return;
+    if (!user || !isAdmin || adminLoading) return;
     const n = nome.trim();
     if (n.length < 3) { setErro("Dê um nome com pelo menos 3 letras."); return; }
     setErro(""); setBusy(true);
@@ -69,7 +71,7 @@ const MinhasPeladas = () => {
           <button onClick={sair} className="rounded-xl border px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted">Sair</button>
         </div>
 
-        <div className="rounded-3xl border bg-card p-5 shadow-sm space-y-3">
+        {isAdmin && <div className="rounded-3xl border bg-card p-5 shadow-sm space-y-3">
           <p className="section-label">Criar nova pelada</p>
           <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome da pelada (ex: Pelada de Quinta)"
             onKeyDown={(e) => e.key === "Enter" && criar()}
@@ -78,7 +80,7 @@ const MinhasPeladas = () => {
           <button onClick={criar} disabled={busy} className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
             Criar pelada
           </button>
-        </div>
+        </div>}
 
         <div className="space-y-2.5">
           {itens.length === 0 && <p className="text-center text-sm text-muted-foreground">Você ainda não participa de nenhuma pelada.</p>}

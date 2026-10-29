@@ -1,0 +1,3 @@
+# Architecture rules
+- Platform-wide pelada creation is authorized by the protected user_roles table and a restrictive INSERT policy; tenant ownership remains separate to preserve existing organizers without granting platform privileges.
+- Resolve OAuth return destinations through safeAuthDestination on the public login page after the authenticated session is available; this preserves player intent without external redirects.
