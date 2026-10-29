@@ -597,7 +597,6 @@ const Index = () => {
           <div className="rounded-2xl bg-muted/30 border px-5 py-3.5">
             <p className="text-xs text-muted-foreground">
               Feito por <strong className="font-semibold text-foreground">Etivaldo</strong> · Mantido por <strong className="font-semibold text-foreground">Display Tecnologia</strong>
-              {" · "}<Link to="/minhas-peladas" className="font-semibold text-primary underline-offset-2 hover:underline">{user ? "Minhas peladas" : "Entrar / Criar minha pelada"}</Link>
             </p>
           </div>
         </div>
